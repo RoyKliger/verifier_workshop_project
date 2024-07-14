@@ -1,102 +1,158 @@
-# Description: A simple verifier for a small imperative language using Hoare logic.
-from z3 import BoolRef, ArithRef, ExprRef
+from z3 import BoolRef
 import z3
 
-# Define the abstract syntax for the language
-class Command:
-    def verify(self, pre, post) -> BoolRef:
-        pass
+from commands import Command, AssignCommand, IfCommand, WhileCommand, SeqCommand, SkipCommand
 
-class SkipCommand(Command):
-    def __str__(self):
-        return "skip"
-    def verify(self, pre, post) -> BoolRef:
-        return z3.Implies(pre, post)
 
-class AssignCommand(Command):
-    def __init__(self, var, expr : ExprRef):
-        self.var = var
-        self.expr = expr
-
-    def __str__(self):
-        return f"{self.var} := {self.expr}"
-
-class IfCommand(Command):
-    def __init__(self, cond, then_stmt, else_stmt):
-        self.cond = cond
-        self.then_stmt = then_stmt
-        self.else_stmt = else_stmt
-
-    def __str__(self):
-        return f"if ({self.cond}) then {{ {self.then_stmt} }} else {{ {self.else_stmt} }}"
-
-class WhileCommand(Command):
-    def __init__(self, cond, body):
-        self.cond = cond
-        self.body = body
-
-    def __str__(self):
-        return f"while ({self.cond}) do {{ {self.body} }}"
-
-# Helper functions for Hoare logic
-def subst(expr, var, val):
-    """Substitute var with val in expr"""
-    pass
-
-# Hoare logic rules
-def hoare_skip(pre, post):
-    return pre == post
-
-def hoare_assign(pre, var, expr, post):
-    return subst(post, var, expr) == pre
-
-def hoare_if(pre, cond, then_stmt, else_stmt, post):
-    then_pre = z3.And(pre, cond)
-    else_pre = z3.And(pre, z3.Not(cond))
-    return z3.And(slove_hoare_triple(then_pre, then_stmt, post), slove_hoare_triple(else_pre, else_stmt, post))
-
-def hoare_while(pre, cond, body, post):
-    invariant = z3.Bool("invariant")
-    body_pre = z3.And(invariant, cond)
-    return z3.And(
-        z3.Implies(pre, invariant),
-        z3.Implies(z3.And(invariant, z3.Not(cond)), post),
-        slove_hoare_triple(body_pre, body, invariant)
-    )
-
-def slove_hoare_triple(pre, stmt, post):
-    if isinstance(stmt, SkipCommand):
-        return hoare_skip(pre, post)
-    elif isinstance(stmt, AssignCommand):
-        return hoare_assign(pre, stmt.var, stmt.expr, post)
-    elif isinstance(stmt, IfCommand):
-        return hoare_if(pre, stmt.cond, stmt.then_stmt, stmt.else_stmt, post)
-    elif isinstance(stmt, WhileCommand):
-        return hoare_while(pre, stmt.cond, stmt.body, post)
-    return False
-
-def solve(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef:
+def get_logics_formula(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef:
     return command.verify(pre, post)
 
-# Example verification problem
-def solve_example():
-    x = z3.Int('x')
-    y = z3.Int('y')
-
-    pre = x == 0
-    post = x == 1
-
-    stmt = AssignCommand(x, y + 1)
-
+def solve(pre, command, post):
+    print("\nExample verification problem:")
+    print("\nPrecondition: ", pre)
+    print("\nCommand: ", command)
+    print("\nPostcondition: ", post, "\n")
     s = z3.Solver()
-    s.add(z3.Not(slove_hoare_triple(pre, stmt, post)))
-
+    formula = get_logics_formula(pre, command, post)
+    print("Verification condition: ", formula)
+    s.add(z3.Not(formula))
     if s.check() == z3.sat:
         print("The verification condition is not valid.")
+        print(s.model())
+        return False
     else:
         print("The verification condition is valid.")
+        return True
+
+def get_args():
+    pre : BoolRef = get_formula_from_user()
+    c : Command = get_command_form_user()
+    post : BoolRef = get_formula_from_user()
+    return pre, c, post
+    
+def get_formula_from_user() -> BoolRef:
+    formula = input("Enter a formula: ")
+    return z3.parse_smt2_string(formula)
+
+def get_command_form_user() -> Command:
+    command = input("Enter a command: ")
+    return parse_command(command)
+
+def parse_command(command: str) -> Command:
+    return parse_command_rec(command.split())
+
+def parse_command_rec(tokens) -> Command:
+    if tokens[0] == "skip":
+        return SkipCommand()
+    elif tokens[0] == "if":
+        cond = z3.parse_smt2_string(tokens[1])
+        c1 = parse_command_rec(tokens[3:])
+        c2 = parse_command_rec(tokens[3 + len(str(c1).split()) + 1:])
+        return IfCommand(cond, c1, c2)
+    elif tokens[0] == "while":
+        cond = z3.parse_smt2_string(tokens[1])
+        inv = z3.parse_smt2_string(tokens[3])
+        body = parse_command_rec(tokens[5:])
+        return WhileCommand(cond, body, inv)
+    elif tokens[1] == ":=":
+        var = z3.Int(tokens[0])
+        expr = z3.parse_smt2_string(" ".join(tokens[2:]))
+        return AssignCommand(var, expr)
+    elif tokens[1] == ";":
+        c1 = parse_command_rec(tokens[0])
+        c2 = parse_command_rec(tokens[2:])
+        mid = z3.Bool("mid")
+        return SeqCommand(c1, c2, mid)
+    else:
+        raise Exception("Invalid command")
+
+def simple_example():
+    x = z3.Int('x')
+    c = SeqCommand(
+        AssignCommand(x, z3.IntVal(0)),
+        WhileCommand(x < 5,
+            AssignCommand(x, x + 1),
+            x <= 5  # Add logical mid value
+        ),
+        x == 0  # Add logical mid value
+    )
+    post = x == 5
+    solve(z3.BoolVal(True), c, post)
+
+def simple_example2():
+    x = z3.Int('x')
+    y = z3.Int('y')
+    z = z3.Int('z')
+    c = SeqCommand(
+        AssignCommand(x, z3.IntVal(0)),
+        SeqCommand(
+            AssignCommand(y, z3.IntVal(5)),
+            SeqCommand(
+                AssignCommand(z, z3.IntVal(10)),
+                AssignCommand(z, y),
+                z3.And(x == 0, y == 5, z == 10)
+            ),
+            z3.And(x == 0 , y == 5)  # Add logical mid value
+        ),
+        x == 0  # Add logical mid value
+    )
+    post = z3.And(x == 0, y == 5, z == 5)
+    solve(z3.BoolVal(True), c, post)
+   
+def simple_example3():
+    x = z3.Int('x')
+    y = z3.Int('y')
+    c = SeqCommand(
+        AssignCommand(x, z3.IntVal(0)),
+        IfCommand(x == 0,
+            AssignCommand(y, z3.IntVal(5)),
+            AssignCommand(y, z3.IntVal(10))
+        ),
+        x == 0  # Add logical mid value
+    )
+    post = z3.And(x == 0, y == 5)
+    solve(z3.BoolVal(True), c, post) 
+# Example verification problem
+def simple_example0():
+    
+    pre : BoolRef
+    pre = z3.BoolVal(True)
+    x = z3.Int('x')
+    y = z3.Int('y')
+    z = z3.Int('z')
+    c = SeqCommand(
+        AssignCommand(x, z3.IntVal(0)),
+        SeqCommand(
+            AssignCommand(y, z3.IntVal(5)),
+            SeqCommand(
+                IfCommand(z3.Or(x == 0, y == 0),
+                    AssignCommand(z, z3.IntVal(10)),
+                    AssignCommand(z, z3.IntVal(20))
+                ),
+                WhileCommand(z > 0,
+                    SeqCommand(
+                        AssignCommand(x, x + 1),
+                        AssignCommand(z, z - 1),
+                        x == 9 - z
+                    ),
+                    z3.And(x <= 10, z >= 0, x == 10 - z)  # Add logical mid value
+                ),
+                z3.And(x == 0, z == 10, y == 5)
+            ),
+            z3.And(x == 0, y == 5)  # Add logical mid value
+        ),
+        x == 0  # Add logical mid value
+    )
+    post = z3.And(x == 10, y == 5, z == 0)
+    print("Example verification problem:")
+    print("\nPrecondition: ", pre)
+    print("\nCommand: ", c)
+    print("\nPostcondition: ", post, "\n")
+    solve(pre, c, post)
+
 
 if __name__ == "__main__":
-    command = Command()
-    solve(command)
+    simple_example3()
+    # pre, c, post = get_args()
+    # solve(pre, c, post)
 
