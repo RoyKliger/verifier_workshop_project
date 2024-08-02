@@ -1,12 +1,10 @@
 from z3 import BoolRef
 import z3
 
-from verifier_workshop_project.commands.commands import Command, AssignCommand, IfCommand, WhileCommand, SeqCommand, SkipCommand
+from verifier_workshop_project.commands.commands import Command, AssignCommand, IfCommand, WhileCommand, SeqCommand, SkipCommand, get_logics_formula
 from verifier_workshop_project.old_parsing import parse_command
 
 
-def get_logics_formula(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef:
-    return command.verify(pre, post)
 
 def solve(pre, command, post):
     print("\nExample verification problem:")

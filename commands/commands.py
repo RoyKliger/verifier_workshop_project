@@ -78,3 +78,7 @@ class SeqCommand(Command):
 def substitute(formula: BoolRef, var, val) -> BoolRef:  
     """returns new formula with all occurences of var replaced by val"""
     return z3.substitute(formula, (var, val))
+
+
+def get_logics_formula(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef:
+    return command.verify(pre, post)
