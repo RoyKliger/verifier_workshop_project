@@ -84,3 +84,10 @@ if __name__ == "__main__":
         skip; 
     end
     """))
+    print(program.parse_or_raise("""
+    x := 0;
+    while x < 10 do {
+        x := x + 1;
+        y := y + 1;
+    } end
+    """))
