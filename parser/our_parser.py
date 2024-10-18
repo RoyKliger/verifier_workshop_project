@@ -43,11 +43,15 @@ def parse_file(file) -> Command:
 
     if len(lst) == 1:
         return from_parser_to_commands(lst[0])
-    else:
-        c1 = from_parser_to_commands(lst[0])
-        c2 = from_parser_to_commands(lst[1:])
-        mid = get_annotations() # change this later, as there is no need for mid in seqcommand anymore
-        return SeqCommand(c1, c2, mid)
+    
+    # divide the code into parts, dividing loops from the rest of the code
+
+    
+    
+    c1 = from_parser_to_commands(lst[0])
+    c2 = from_parser_to_commands(lst[1:])
+    mid = get_annotations() # change this later, as there is no need for mid in seqcommand anymore
+    return SeqCommand(c1, c2, mid)
 
 
 def parse_annotations(annotations_file : str) -> List[BoolRef]:
