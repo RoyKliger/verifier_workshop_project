@@ -1,12 +1,12 @@
 #import the parser
 from re import L, S
-from verifier_workshop_project.parser import Statement, int_expr, bool_expr
-from verifier_workshop_project.parser.models import Assignment, If, While
-from verifier_workshop_project.commands.commands import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
+from parser import Statement, int_expr, bool_expr
+from parser.models import Assignment, If, While
+from commands.commands import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from pyrsercomb import token, regex, fix, Parser, string, lift3, const, lift2
 from models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
 
-from z3 import BoolRef, IntRef, Implies, And, Not, Int, Bool, substitute
+from z3 import BoolRef, ExprRef, Implies, And, Not, Int, Bool, substitute
 import z3
 
 from typing import List
@@ -34,24 +34,64 @@ def from_parser_to_commands(parse_result : Statement) -> Command:
 def file_to_string(file):
     with open(file, "r") as f:
         return f.read()
-    
+
 # file : str -> Statement    
 def parse_file(file) -> Statement:
-    string = file_to_string(file)
-    pass
-    
-        
-    
+    file_content = file_to_string(file)
+    return parser.parse(file_content) # or parser.parse_or_raise(file_content)
+
 def parse_annotations(annotations_file : str) -> List[BoolRef]:
     with open(annotations_file, "r") as f:
         return [z3.Bool(line) for line in f.readlines()]
-    
 
-def from_int_expr_to_z3(expr : IntExpr) -> IntRef: 
-    pass
+def from_int_expr_to_z3(expr : IntExpr) -> ExprRef: 
+    if isinstance(expr, Identifier):
+        return Int(expr.name)
+    elif isinstance(expr, int):
+        return Int(expr)
+    elif isinstance(expr, BinaryIntExpr):
+        left_z3 = from_int_expr_to_z3(expr.left)
+        right_z3 = from_int_expr_to_z3(expr.right)
+        if expr.op == "+":
+            return left_z3 + right_z3
+        elif expr.op == "-":
+            return left_z3 - right_z3
+        elif expr.op == "*":
+            return left_z3 * right_z3
+        elif expr.op == "/":
+            return left_z3 / right_z3
+    else:
+        raise Exception("Invalid int expression")
 
 def from_bool_expr_to_z3(expr : BoolExpr) -> BoolRef:
-    pass
+    if isinstance(expr, Identifier):
+        return Bool(expr.name)
+    elif isinstance(expr, bool):
+        return z3.BoolVal(expr)
+    elif isinstance(expr, Comparison):
+        left_z3 = from_int_expr_to_z3(expr.left)
+        right_z3 = from_int_expr_to_z3(expr.right)
+        if expr.op == "<":
+            return left_z3 < right_z3
+        elif expr.op == "<=":
+            return left_z3 <= right_z3
+        elif expr.op == ">":
+            return left_z3 > right_z3
+        elif expr.op == ">=":
+            return left_z3 >= right_z3
+        elif expr.op == "=":
+            return left_z3 == right_z3
+        elif expr.op == "!=":
+            return left_z3 != right_z3
+    elif isinstance(expr, BinaryBoolExpr):
+        left_z3 = from_bool_expr_to_z3(expr.left)
+        right_z3 = from_bool_expr_to_z3(expr.right)
+        if expr.op == "&&":
+            return z3.And(left_z3, right_z3)
+        elif expr.op == "||":
+            return z3.Or(left_z3, right_z3)
+    else:
+        raise Exception("Invalid bool expression")
 
 def get_annotations() -> BoolRef:
     pass
