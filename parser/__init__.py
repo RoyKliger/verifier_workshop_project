@@ -74,8 +74,9 @@ statement = fix(def_statement)
 program = ~statement
 
 if __name__ == "__main__":
-    print(program.parse_or_raise("skip;"))
-    print(program.parse_or_raise("x := (50 * y) + 7;"))
+#     print(bool_expr.parse_or_raise("true;"))
+#     print(program.parse_or_raise("skip;"))
+#     print(program.parse_or_raise("x := (50 * y) + 7;"))
     print(program.parse_or_raise("""
     if x > y then { 
         x := (50 * y) + 7; 
@@ -84,10 +85,10 @@ if __name__ == "__main__":
         skip; 
     end
     """))
-    print(program.parse_or_raise("""
-    x := 0;
-    while x < 10 do {
-        x := x + 1;
-        y := y + 1;
-    } end
-    """))
+#     print(program.parse_or_raise("""
+#     x := 0;
+#     while x < 10 do {
+#         x := x + 1;
+#         y := y + 1;
+#     } end
+#     """))

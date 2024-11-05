@@ -4,7 +4,7 @@ import z3
 
 # Define the abstract syntax for the language
 class Command:
-    def verify(self, pre, post) -> BoolRef:
+    def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
         return z3.Implies(pre, self.calculate_wlp(post))
 
     def calculate_wlp(self, post) -> BoolRef:
@@ -18,7 +18,7 @@ class SkipCommand(Command):
         return post
 
 class AssignCommand(Command):
-    def __init__(self, var, expr : ExprRef):
+    def __init__(self, var, expr):
         self.var = var
         self.expr = expr
 
@@ -32,7 +32,7 @@ class AssignCommand(Command):
     #         # return z3.Implies(pre, z3.And(pre, self.var == self.expr))
     #     return z3.Implies(pre, substitute(post, self.var, self.expr))
     
-    def calculate_wlp(self, post) -> BoolRef:
+    def calculate_wlp(self, post: BoolRef) -> BoolRef:
         return substitute(post, self.var, self.expr)
 
 class IfCommand(Command):
@@ -50,7 +50,7 @@ class IfCommand(Command):
     #     # print("\nIF: ", z3.And(self.c1.verify(then_pre, post), self.c2.verify(else_pre, post)))
     #     return z3.And(self.c1.verify(then_pre, post), self.c2.verify(else_pre, post))
     
-    def calculate_wlp(self, post) -> BoolRef:
+    def calculate_wlp(self, post : BoolRef) -> BoolRef:
 
         return z3.And(
             z3.Implies(self.cond, self.c1.calculate_wlp(post)),
@@ -81,7 +81,7 @@ class WhileCommand(Command):
         )
 
 class SeqCommand(Command):
-    def __init__(self, c1: Command, c2: Command, mid: BoolRef):
+    def __init__(self, c1: Command, c2: Command, mid: BoolRef = None):
         self.c1 = c1
         self.c2 = c2
         self.mid = mid
@@ -92,7 +92,7 @@ class SeqCommand(Command):
     def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
         
         # one of the commands is a while command
-        if isinstance(self.c1) == WhileCommand or isinstance(self.c2) == WhileCommand:
+        if isinstance(self.c1, WhileCommand) or isinstance(self.c2, WhileCommand):
             
             # mid was not provided
             if self.mid == None:
@@ -104,14 +104,15 @@ class SeqCommand(Command):
         
         # both commands are not while commands
         # we can use wlp
-        return super.verify(pre, post)
+        return super().verify(pre, post)
     
-    def calculate_wlp(self, post) -> BoolRef:
+    def calculate_wlp(self, post : BoolRef) -> BoolRef:
         return self.c1.calculate_wlp(self.c2.calculate_wlp(post))
 
 # Helper functions for Hoare logic
 def substitute(formula: BoolRef, var, val) -> BoolRef:  
     """returns new formula with all occurences of var replaced by val"""
+    print(f"Performing commands_wlp_hybrid.substitute with inputs:\nformula: {formula} of type {type(formula)}\nvar: {var} of type {type(var)}\nval: {val} of type {type(val)}")
     return z3.substitute(formula, (var, val))
 
 def get_logics_formula(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef:

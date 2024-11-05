@@ -1,12 +1,12 @@
 from z3 import BoolRef
 import z3
 
-from verifier_workshop_project.commands.commands import Command, AssignCommand, IfCommand, WhileCommand, SeqCommand, SkipCommand, get_logics_formula
-from verifier_workshop_project.old_parsing import parse_command
+from commands.commands_wlp_hybrid import Command, AssignCommand, IfCommand, WhileCommand, SeqCommand, SkipCommand, get_logics_formula
+# from old_parsing import parse_command
 
 
 
-def solve(pre, command, post):
+def solve(pre : BoolRef, command : Command, post: BoolRef):
     print("\nExample verification problem:")
     print("\nPrecondition: ", pre)
     print("\nCommand: ", command)
@@ -125,7 +125,7 @@ def simple_example0():
 
 
 if __name__ == "__main__":
-    simple_example3()
+    solve(z3.Int('x') == 0, AssignCommand(z3.Int('x'), z3.IntVal(1)), z3.Int('x') == 1)
     # pre, c, post = get_args()
     # solve(pre, c, post)
 

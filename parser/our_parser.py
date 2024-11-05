@@ -1,71 +1,87 @@
 #import the parser
 from re import L, S
 from parser import Statement, int_expr, bool_expr
+# from pyrsercomb import Parser
 from parser.models import Assignment, If, While
-from commands.commands import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
+from commands.commands_wlp_hybrid import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from pyrsercomb import token, regex, fix, Parser, string, lift3, const, lift2
 from models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
+from __init__ import program, bool_expr, int_expr, statement
 
 from z3 import BoolRef, ExprRef, Implies, And, Not, Int, Bool, substitute
 import z3
 
 from typing import List
 
-parser = Parser()
-
-def from_parser_to_commands(parse_result : Statement) -> Command:
-    if isinstance(parse_result, ):
+def from_parser_to_commands(parse_result : List[Statement]) -> Command:
+    if parse_result is None or len(parse_result) == 0 or parse_result[0] is None:
+        # parse_result is None in the case of a skip command.
         return SkipCommand()
-    elif isinstance(parse_result, Assignment):
-        return AssignCommand(parse_result.variable, from_int_expr_to_z3(parse_result.expression))
-    elif isinstance(parse_result, If):
-        return IfCommand(from_bool_expr_to_z3(parse_result.condition), from_parser_to_commands(parse_result.then_branch), from_parser_to_commands(parse_result.else_branch))
+    first_statement = parse_result[0]
+    if isinstance(first_statement, Assignment):
+        first_command = AssignCommand(intexpr_z3ify(first_statement.variable), intexpr_z3ify(first_statement.value))
+        return first_command if len(parse_result) == 1 else SeqCommand(first_command, from_parser_to_commands(list(parse_result[1:])))
+    elif isinstance(first_statement, If):
+        first_command = IfCommand(boolexpr_z3ify(first_statement.condition), from_parser_to_commands(first_statement.if_true), from_parser_to_commands(first_statement.if_false))
+        return first_command if len(parse_result) == 1 else SeqCommand(first_command, from_parser_to_commands(list(parse_result[1:])))
+    # FIX THE FOLLOWING CODE. parse_result.invariant does not exist, we need to obtain the invariant from the annotations file
     elif isinstance(parse_result, While):
-        return WhileCommand(from_bool_expr_to_z3(parse_result.condition), from_parser_to_commands(parse_result.body), from_bool_expr_to_z3(parse_result.invariant))
+        return WhileCommand(boolexpr_z3ify(parse_result.condition), from_parser_to_commands(parse_result.body), boolexpr_z3ify(parse_result.invariant))
     # elif isinstance(parse_result, List["statement"]):
     #     c1 = from_parser_to_commands(parse_result[0])
     #     c2 = from_parser_to_commands(parse_result[1:])
     #     mid = get_annotations()
     #     return SeqCommand(c1, c2, mid)
     else:
-        raise Exception("Invalid command")
+        raise Exception("Invalid command, here is the command: ", parse_result)
     
-    
-def file_to_string(file):
+def file_to_string(file): # unused.
     with open(file, "r") as f:
         return f.read()
 
-# file : str -> Command
-def parse_file(file) -> Command:
+# str -> Command
+def parse_code(code_str : str) -> Command:
+    """
+    Parses a given code string and converts it into a sequence of commands.
+    Args:
+        code_str (str): The string representation of the code to be parsed.
+    Returns:
+        Command: A command object representing the parsed code. If the code is empty,
+                 it returns a SkipCommand. If the code contains only one command,
+                 it returns that command. Otherwise, it returns a SeqCommand
+                 containing the sequence of commands.
+    """
 
-    file_content = file_to_string(file)
-    lst = parser.parse(file_content) # or parser.parse_or_raise(file_content)
+    lst = program.parse_or_raise(code_str) # or program.parse(code_str)?
 
+    # code_str does not contain any commands i.e. it is empty
+    if len(lst) == 0:
+        return SkipCommand()
+    
+    # this is a separate case to avoid index out of range exception in c2
     if len(lst) == 1:
-        return from_parser_to_commands(lst[0])
+        return from_parser_to_commands([lst[0]])
     
-    # divide the code into parts, dividing loops from the rest of the code
-
-    
-    
-    c1 = from_parser_to_commands(lst[0])
+    c1 = from_parser_to_commands([lst[0]])
     c2 = from_parser_to_commands(lst[1:])
-    mid = get_annotations() # change this later, as there is no need for mid in seqcommand anymore
-    return SeqCommand(c1, c2, mid)
+    
+    # recursively build the sequence of commands
+    return SeqCommand(c1, c2)
 
 
-def parse_annotations(annotations_file : str) -> List[BoolRef]:
-    with open(annotations_file, "r") as f:
-        return [z3.Bool(line) for line in f.readlines()]
+def parse_single_annotation(annotations_str : str) -> List[BoolRef]:
 
-def from_int_expr_to_z3(expr : IntExpr) -> ExprRef: 
+    return bool_expr.parse_or_raise(annotations_str)
+
+
+def intexpr_z3ify(expr : IntExpr) -> ExprRef:
     if isinstance(expr, Identifier):
         return Int(expr.name)
     elif isinstance(expr, int):
-        return Int(expr)
+        return z3.IntVal(expr)
     elif isinstance(expr, BinaryIntExpr):
-        left_z3 = from_int_expr_to_z3(expr.left)
-        right_z3 = from_int_expr_to_z3(expr.right)
+        left_z3 = intexpr_z3ify(expr.left)
+        right_z3 = intexpr_z3ify(expr.right)
         if expr.op == "+":
             return left_z3 + right_z3
         elif expr.op == "-":
@@ -77,14 +93,14 @@ def from_int_expr_to_z3(expr : IntExpr) -> ExprRef:
     else:
         raise Exception("Invalid int expression")
 
-def from_bool_expr_to_z3(expr : BoolExpr) -> BoolRef:
+def boolexpr_z3ify(expr : BoolExpr) -> BoolRef:
     if isinstance(expr, Identifier):
         return Bool(expr.name)
     elif isinstance(expr, bool):
         return z3.BoolVal(expr)
     elif isinstance(expr, Comparison):
-        left_z3 = from_int_expr_to_z3(expr.left)
-        right_z3 = from_int_expr_to_z3(expr.right)
+        left_z3 = intexpr_z3ify(expr.left)
+        right_z3 = intexpr_z3ify(expr.right)
         if expr.op == "<":
             return left_z3 < right_z3
         elif expr.op == "<=":
@@ -98,8 +114,8 @@ def from_bool_expr_to_z3(expr : BoolExpr) -> BoolRef:
         elif expr.op == "!=":
             return left_z3 != right_z3
     elif isinstance(expr, BinaryBoolExpr):
-        left_z3 = from_bool_expr_to_z3(expr.left)
-        right_z3 = from_bool_expr_to_z3(expr.right)
+        left_z3 = boolexpr_z3ify(expr.left)
+        right_z3 = boolexpr_z3ify(expr.right)
         if expr.op == "&&":
             return z3.And(left_z3, right_z3)
         elif expr.op == "||":
