@@ -5,7 +5,7 @@ import os
 from typing import List
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from parser.our_parser import parse_code, parse_single_annotation, boolexpr_z3ify
+from parser.our_parser import OurParser, boolexpr_z3ify
 import verifier
 
 def verify_code(code : str, annotations : List[str]):
@@ -17,10 +17,11 @@ def verify_code(code : str, annotations : List[str]):
     Returns:
         None
   """
-  parsed = parse_code(code)
-  pre = boolexpr_z3ify(parse_single_annotation(annotations[0]))
-  post = boolexpr_z3ify(parse_single_annotation(annotations[1]))
-  verifier.solve(pre, parsed, post)
+  
+  parser = OurParser()
+  pre, post = parser.parse_annotations(annotations)
+  parsed_code = parser.parse_code(code)
+  verifier.solve(pre, parsed_code, post)
 
 def create_input_frame(container):
   code_frame = ttk.Frame(container)
