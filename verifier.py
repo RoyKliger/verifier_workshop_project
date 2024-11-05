@@ -23,19 +23,19 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
         print("The verification condition is valid.")
         return True
 
-def get_args():
-    pre : BoolRef = get_formula_from_user()
-    c : Command = get_command_form_user()
-    post : BoolRef = get_formula_from_user()
-    return pre, c, post
+# def get_args():
+#     pre : BoolRef = get_formula_from_user()
+#     c : Command = get_command_form_user()
+#     post : BoolRef = get_formula_from_user()
+#     return pre, c, post
     
-def get_formula_from_user() -> BoolRef:
-    formula = input("Enter a formula: ")
-    return z3.parse_smt2_string(formula)
+# def get_formula_from_user() -> BoolRef:
+#     formula = input("Enter a formula: ")
+#     return z3.parse_smt2_string(formula)
 
-def get_command_form_user() -> Command:
-    command = input("Enter a command: ")
-    return parse_command(command)
+# def get_command_form_user() -> Command:
+#     command = input("Enter a command: ")
+#     return parse_command(command)
 
 
 

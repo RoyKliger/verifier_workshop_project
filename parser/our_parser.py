@@ -35,10 +35,6 @@ def from_parser_to_commands(parse_result : List[Statement]) -> Command:
     else:
         raise Exception("Invalid command, here is the command: ", parse_result)
     
-def file_to_string(file): # unused.
-    with open(file, "r") as f:
-        return f.read()
-
 # str -> Command
 def parse_code(code_str : str) -> Command:
     """
