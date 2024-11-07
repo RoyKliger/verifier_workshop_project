@@ -1,8 +1,28 @@
 from z3 import BoolRef
 import z3
 
-from commands.commands_wlp_hybrid import Command, AssignCommand, IfCommand, WhileCommand, SeqCommand, SkipCommand
+from commands.commands_wlp_hybrid import Command, AssignCommand, IfCommand, WhileCommand, SeqCommand, SkipCommand, get_logics_formula
+from parser.our_parser import OurParser
 # from old_parsing import parse_command
+
+def verify_code(code: str, pre : str, post :str):
+  """
+  Solves the verification problem for the given code and annotations.
+  Args:
+    code (str): The string representation of the code.
+    pre (str): The string representation of the pre-condition.
+    post (str): The string representation of the post-condition.
+  Returns:
+    None
+  """
+  
+  parser = OurParser()
+  parsed_pre = parser.parse_single_annotation(pre)
+  parsed_code = parser.parse_code(code)
+  parsed_post = parser.parse_single_annotation(post)
+  solve(parsed_pre, parsed_code, parsed_post)
+  
+  
 
 def solve(pre : BoolRef, command : Command, post: BoolRef):
 

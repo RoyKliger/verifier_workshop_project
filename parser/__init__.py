@@ -5,6 +5,7 @@ from models import (
     Statement)
 
 lpar, rpar = token(string("(")), token(string(")"))
+lbracket, rbracket = token(string("[")), token(string("]"))
 lbrace, rbrace = token(string("{")), token(string("}"))
 semicolon = token(string(";"))
 assign = token(string(":="))
@@ -54,19 +55,21 @@ assignment = (ident << assign & int_expr)[lift2(Assignment)] << semicolon
 
 
 def def_statement(parser: Parser[str, Statement]) -> Parser[str, Statement]:
-    conditional = (
+    if_statement = (
             token(string("if")) >> bool_expr << token(string("then"))
             & parser << token(string("else"))
-            & parser << token(string("end"))
+            & parser 
     )[lift3(If)]
 
-    loop = (
-            token(string("while")) >> bool_expr << token(string("do")) & parser << token(string("end"))
-    )[lift2(While)]
+    while_statement = (
+            token(string("while")) >> bool_expr << token(string("do"))
+            & token(lbracket >> bool_expr << rbracket)
+            & parser
+    )[lift3(While)]
 
     block = lbrace >> ~parser << rbrace
 
-    return block ^ conditional ^ loop ^ skip ^ assignment
+    return block ^ if_statement ^ while_statement ^ skip ^ assignment
 
 
 statement = fix(def_statement)
@@ -93,7 +96,6 @@ if __name__ == "__main__":
         y := x;
     } else 
         skip; 
-    end
     """))
 #     print(program.parse_or_raise("""
 #     x := 0;

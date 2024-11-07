@@ -5,32 +5,9 @@ import os
 from typing import List, Dict
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from parser.our_parser import parse_code, parse_single_annotation, boolexpr_z3ify
-import verifier
+from verifier import verify_code
 
-def verify_code(code: str, annotations: List[str], invariants: Dict[int, str]):
-  """
-  Solves the verification problem for the given code and annotations.
-  Args:
-    code (str): The string representation of the code.
-    annotations (List[str]): A list of two strings representing the annotations.
-  Returns:
-    None
-  """
 
-  """
-  if x==y then {
-	x:=y+1;
-} else {
-	x:=y;
-}"""
-  print("Code: ", code)
-  parsed = parse_code(code)
-  print("Parsed: ", parsed)
-  pre = boolexpr_z3ify(parse_single_annotation(annotations[0]))
-  post = boolexpr_z3ify(parse_single_annotation(annotations[1]))
-
-  return verifier.solve(pre, parsed, post)
 
 class VerifierApp:
 
@@ -126,6 +103,7 @@ class VerifierApp:
 
     # obtain all user inputs
     code = self.code_file.get("1.0", tk.END)
+    verify_code(code, self.pre_annotation.get("1.0", tk.END), self.post_annotation.get("1.0", tk.END) )
     annotations = [self.pre_annotation.get("1.0", tk.END), self.post_annotation.get("1.0", tk.END)]
     invariants = {int(self.entry_lines[i]): self.entry_values[i] for i in range(len(self.entries))}
 
