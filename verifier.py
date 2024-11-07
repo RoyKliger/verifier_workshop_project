@@ -5,7 +5,7 @@ from commands.commands_wlp_hybrid import Command, AssignCommand, IfCommand, Whil
 from parser.our_parser import OurParser
 # from old_parsing import parse_command
 
-def verify_code(code: str, pre : str, post :str):
+def verify_code(code : str, pre : str, post : str):
   """
   Solves the verification problem for the given code and annotations.
   Args:
@@ -15,12 +15,15 @@ def verify_code(code: str, pre : str, post :str):
   Returns:
     None
   """
-  
+
   parser = OurParser()
+
   parsed_pre = parser.parse_single_annotation(pre)
   parsed_code = parser.parse_code(code)
   parsed_post = parser.parse_single_annotation(post)
-  solve(parsed_pre, parsed_code, parsed_post)
+  return solve(parsed_pre, parsed_code, parsed_post)
+
+
   
   
 
@@ -39,10 +42,10 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
     if s.check() == z3.sat:
         print("The verification condition is not valid.")
         print(s.model())
-        return [False, formula, s.model()]
+        return False, formula, s.model()
     else:
         print("The verification condition is valid.")
-        return [True, formula, None]
+        return True, formula, None
 
 
 # def simple_example():

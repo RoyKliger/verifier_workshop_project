@@ -108,7 +108,7 @@ class VerifierApp:
     invariants = {int(self.entry_lines[i]): self.entry_values[i] for i in range(len(self.entries))}
 
     # call verifier
-    passed, formula, model = verify_code(code, annotations, invariants)
+    passed, formula, model = verify_code(code, annotations[0], annotations[1])
 
     # display feedback to user
     feedback_text = "Verification successful!\nAll models satisfy the verification condition." if passed else f"Verification failed!\nThe unsatisfied verification condition is {formula}\n{f'Counterexample model: {model}' if len(model) > 0 else 'There is no model that satisfies the verification condition.'}"
