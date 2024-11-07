@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TypeAlias
 
 @dataclass
@@ -46,6 +46,7 @@ class If:
 @dataclass
 class While:
     condition: BoolExpr
+    invariant: BoolExpr
     body: "Statement"
 
 
