@@ -21,20 +21,29 @@ def verify_code(code : str, pre : str, post : str):
   parsed_pre = parser.parse_single_annotation(pre)
   parsed_code = parser.parse_code(code)
   parsed_post = parser.parse_single_annotation(post)
+
+  print("Parsed pre-condition: ", parsed_pre)
+  print("Parsed code: ", parsed_code)
+  print("Parsed post-condition: ", parsed_post)
   return solve(parsed_pre, parsed_code, parsed_post)
 
 
-  
-  
 
 def solve(pre : BoolRef, command : Command, post: BoolRef):
 
     # create solver
     s = z3.Solver()
 
-    print(command)
+
     # obtain the proper verification condition
-    formula = command.verify(pre, post)
+    formula = z3.And(
+        z3.Implies(
+            pre, 
+            command.calculate_wlp(post)
+        ),
+        command.vc(post)
+    )
+
     print("Verification condition: ", formula)
 
     # check if the negation of the vc is satisfiable

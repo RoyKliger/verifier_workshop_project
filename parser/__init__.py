@@ -28,7 +28,7 @@ def def_int_expr(
 
 int_expr = fix(def_int_expr)
 
-comparison_op = token(regex(r"(<|<=|>=|>|=|!=)"))
+comparison_op = token(regex(r"(<=|<|>=|>|=|!=)"))
 comparison = (int_expr & comparison_op & int_expr)[lift3(Comparison)]
 
 false = token(string("false"))[const(False)]
