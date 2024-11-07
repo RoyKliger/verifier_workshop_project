@@ -73,6 +73,16 @@ statement = fix(def_statement)
 
 program = ~statement
 
+# # Array parsing
+# lbracket, rbracket = token(string("[")), token(string("]"))
+# comma = token(string(","))
+
+# array = (lbracket >> ~int_expr.sep_by(comma) << rbracket)[list]
+
+# # Update statement parser to include array and method call
+# list = fix(lambda parser: def_statement(parser) ^ array)
+
+
 if __name__ == "__main__":
 #     print(bool_expr.parse_or_raise("true;"))
 #     print(program.parse_or_raise("skip;"))

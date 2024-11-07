@@ -17,11 +17,20 @@ def verify_code(code: str, annotations: List[str], invariants: Dict[int, str]):
   Returns:
     None
   """
-  
+
+  """
+  if x==y then {
+	x:=y+1;
+} else {
+	x:=y;
+}"""
+  print("Code: ", code)
   parsed = parse_code(code)
+  print("Parsed: ", parsed)
   pre = boolexpr_z3ify(parse_single_annotation(annotations[0]))
   post = boolexpr_z3ify(parse_single_annotation(annotations[1]))
-  verifier.solve(pre, parsed, post)
+
+  return verifier.solve(pre, parsed, post)
 
 class VerifierApp:
 
@@ -49,26 +58,26 @@ class VerifierApp:
 
     # code frame
 
-    code_frame = ttk.Frame(container)
+    self.code_frame = ttk.Frame(container)
 
-    ttk.Label(code_frame, text='Code:').grid(column=0, row=0, sticky=tk.W)
-    self.code_file = tk.Text(code_frame, width=30, height=30)
+    ttk.Label(self.code_frame, text='Code:').grid(column=0, row=0, sticky=tk.W)
+    self.code_file = tk.Text(self.code_frame, width=30, height=30)
     self.code_file.grid(column=0, row=1, sticky=tk.W)
 
     # annotations frame
 
-    annotations_frame = ttk.Frame(container)
+    self.annotations_frame = ttk.Frame(container)
 
-    ttk.Label(annotations_frame, text='Annotation1:').grid(column=0, row=0, sticky=tk.W)
-    self.pre_annotation = tk.Text(annotations_frame, width=30, height=5)
+    ttk.Label(self.annotations_frame, text='Precondition:').grid(column=0, row=0, sticky=tk.W)
+    self.pre_annotation = tk.Text(self.annotations_frame, width=30, height=5)
     self.pre_annotation.grid(column=0, row=1, sticky=tk.W)
 
-    ttk.Label(annotations_frame, text='Annotation2:').grid(column=0, row=2, sticky=tk.W)
-    self.post_annotation = tk.Text(annotations_frame, width=30, height=5)
+    ttk.Label(self.annotations_frame, text='Postcondition:').grid(column=0, row=2, sticky=tk.W)
+    self.post_annotation = tk.Text(self.annotations_frame, width=30, height=5)
     self.post_annotation.grid(column=0, row=3, sticky=tk.W)
 
     # invariants frame
-    invariants_frame = ttk.Frame(annotations_frame)
+    invariants_frame = ttk.Frame(self.annotations_frame)
     invariants_frame.grid(column=0, row=4, sticky=tk.W)
 
     ttk.Label(invariants_frame, text='Loop Invariants:').grid(column=0, row=0, sticky=tk.W)
@@ -76,14 +85,15 @@ class VerifierApp:
     self.annotations_button.grid(column=1, row=0, sticky=tk.W)
 
     # verify button frame
-    frame2 = ttk.Frame(container)
-    frame2.columnconfigure(2, weight=1)
-    ttk.Button(frame2, text='Verify', command=self.on_verify).grid(column=0, row=0)
+    self.verify_frame = ttk.Frame(container)
+    self.verify_frame.columnconfigure(2, weight=1)
+    ttk.Button(self.verify_frame, text='Verify', command=self.on_verify).grid(column=0, row=0)
+    self.feedback = tk.Label(self.verify_frame, text="")
 
-    for widget in code_frame.winfo_children() + annotations_frame.winfo_children() + frame2.winfo_children():
+    for widget in self.code_frame.winfo_children() + self.annotations_frame.winfo_children() + self.verify_frame.winfo_children():
       widget.grid(padx=5, pady=5)
 
-    return [code_frame, annotations_frame, frame2]
+    return [self.code_frame, self.annotations_frame, self.verify_frame]
   
   def add_entry(self):
 
@@ -103,12 +113,8 @@ class VerifierApp:
     curr_line = self.current_line_entry.get()
     curr_invariant = self.current_entry.get("1.0", tk.END).strip()
 
-    if curr_line == '' or curr_invariant == '':
-      self.current_entry = None
-      raise ValueError("Please fill in all fields")
-    
-    if self.current_entry:
-      self.current_entry.config(state='disabled')
+    if curr_line != '' and curr_invariant != '' and self.current_entry:
+      #self.current_entry.config(state='disabled')
       self.entries.append(self.current_entry)
       self.entry_lines.append(curr_line)
       self.entry_values.append(curr_invariant)
@@ -117,10 +123,18 @@ class VerifierApp:
       self.annotations_button.config(state='normal')
 
   def on_verify(self):
+
+    # obtain all user inputs
     code = self.code_file.get("1.0", tk.END)
     annotations = [self.pre_annotation.get("1.0", tk.END), self.post_annotation.get("1.0", tk.END)]
     invariants = {int(self.entry_lines[i]): self.entry_values[i] for i in range(len(self.entries))}
-    verify_code(code, annotations, invariants)
+
+    # call verifier
+    passed, formula, model = verify_code(code, annotations, invariants)
+
+    # display feedback to user
+    feedback_text = "Verification successful!\nAll models satisfy the verification condition." if passed else f"Verification failed!\nThe unsatisfied verification condition is {formula}\n{f'Counterexample model: {model}' if len(model) > 0 else 'There is no model that satisfies the verification condition.'}"
+    self.feedback.config(text=feedback_text)
 
 def create_main_window():
   root = tk.Tk()
