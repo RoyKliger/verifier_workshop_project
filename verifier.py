@@ -34,11 +34,12 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
     # create solver
     s = z3.Solver()
 
+    print("\n\nCALCULATING FORMULA\n\n")
 
     # obtain the proper verification condition
     formula = z3.And(
         z3.Implies(
-            pre, 
+            pre,
             command.calculate_wlp(post)
         ),
         command.vc(post)
