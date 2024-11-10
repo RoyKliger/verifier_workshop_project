@@ -38,7 +38,7 @@ class VerifierApp:
     self.code_frame = ttk.Frame(container)
 
     ttk.Label(self.code_frame, text='Code:').grid(column=0, row=0, sticky=tk.W)
-    self.code_file = tk.Text(self.code_frame, width=30, height=30)
+    self.code_file = tk.Text(self.code_frame, width=100, height=30)
     self.code_file.grid(column=0, row=1, sticky=tk.W)
 
     # annotations frame

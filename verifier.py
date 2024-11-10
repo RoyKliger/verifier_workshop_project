@@ -34,7 +34,7 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
 
     print(command)
     # obtain the proper verification condition
-    formula = command.verify(pre, post)
+    formula = z3.Implies(pre, command.calculate_wlp(post))
     print("Verification condition: ", formula)
 
     # check if the negation of the vc is satisfiable
