@@ -50,4 +50,13 @@ class While:
     body: "Statement"
 
 
-Statement: TypeAlias = None | Assignment | If | While | list["Statement"]
+@dataclass
+class For:
+    start: "Statement"
+    end: BoolExpr
+    diff: "Statement"
+    invariant: BoolExpr
+    body: "Statement"
+
+
+Statement: TypeAlias = None | Assignment | If | While | For | list["Statement"]

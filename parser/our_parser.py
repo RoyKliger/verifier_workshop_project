@@ -6,10 +6,10 @@ from parser import Statement, int_expr, bool_expr
 from parser.models import Assignment, If, While
 from commands.commands_wlp_hybrid import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from pyrsercomb import token, regex, fix, Parser, string, lift3, const, lift2
-from models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
+from models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, For, Statement
 from __init__ import program, bool_expr, int_expr, statement
 
-from z3 import BoolRef, ExprRef, Implies, And, Not, Int, Bool, substitute
+from z3 import BoolRef, ExprRef, Implies, And, Not, Int, Bool
 import z3
 
 from typing import List, Dict, Literal, Tuple
@@ -19,20 +19,48 @@ from typing import List, Dict, Literal, Tuple
 class OurParser():
             
     def from_parser_to_commands(self, parse_result : List[Statement]) -> Command:
+        print("Performing from_parser_to_commands with inputs: ", parse_result)
         if parse_result is None or len(parse_result) == 0 or parse_result[0] is None:
+            print("Returning SkipCommand")
             # parse_result is None in the case of a skip command.
             return SkipCommand()
         first_statement = parse_result[0]
         if isinstance(first_statement, Assignment):
+            print("Performing Assignment")
             first_command = AssignCommand(intexpr_z3ify(first_statement.variable), intexpr_z3ify(first_statement.value))
             return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
         elif isinstance(first_statement, If):
+            print("Performing If")
             first_command = IfCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.if_true), self.from_parser_to_commands(first_statement.if_false))
             return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
         # FIX THE FOLLOWING CODE. parse_result.invariant does not exist, we need to obtain the invariant from the annotations file
         elif isinstance(first_statement, While):
+            print("Performing While")
             first_command = WhileCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.body), boolexpr_z3ify(first_statement.invariant))
             return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
+        
+        elif isinstance(first_statement, For):
+            print("Performing For")
+            bodyCommand = self.from_parser_to_commands(first_statement.body)
+            diffCommand = self.from_parser_to_commands([first_statement.diff])
+            print("\n\nDIFFCOMMAND ", diffCommand)
+            print("\n\nDIFFCOMAND type ", type(diffCommand))
+
+            first_command = SeqCommand(
+                self.from_parser_to_commands([first_statement.start]),
+                WhileCommand(
+                    boolexpr_z3ify(first_statement.end),
+                    SeqCommand(
+                        bodyCommand,
+                        diffCommand
+                    ),
+                    # While loop invariant
+                    boolexpr_z3ify(first_statement.invariant)
+                    #diffCommand.substitute(boolexpr_z3ify(first_statement.end)
+                )
+            )
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
+
             
         # elif isinstance(parse_result, List["statement"]):
         #     c1 = from_parser_to_commands(parse_result[0])
@@ -56,7 +84,7 @@ class OurParser():
         """
         
         lst = program.parse_or_raise(code_str) # or program.parse(code_str)?
-
+        print("Pure parsed code: ", lst)
         # code_str does not contain any commands i.e. it is empty
         if len(lst) == 0:
             return SkipCommand()
