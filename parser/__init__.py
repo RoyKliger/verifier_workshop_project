@@ -36,7 +36,7 @@ true = token(string("true"))[const(True)]
 
 boolean = true ^ false
 
-bool_op = token(regex(r"(&&|\\|\\|)"))
+bool_op = token(regex(r"(&&|\|\|)"))
 
 
 def def_bool_expr(parser: Parser[str, BoolExpr]) -> Parser[str, BoolExpr]:
