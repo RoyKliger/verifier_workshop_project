@@ -1,7 +1,8 @@
 from z3 import BoolRef
 import z3
 
-from commands.commands_wlp_hybrid import Command, HoareTriple
+from commands.hybrid import Command, HoareTriple
+# from commands.wlp import Command
 from parser.our_parser import OurParser
 from global_variables import loops
 
@@ -144,6 +145,7 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
 
 
 if __name__ == "__main__":
+    pass
     # solve(z3.Int('x') != z3.Int('y'), IfCommand(z3.Int('x') == z3.Int('y'), AssignCommand(z3.Int('x'), z3.Int('y') + 1), AssignCommand(z3.Int('x'), z3.Int('y'))), z3.Int('x') == z3.Int('y'))
     # pre, c, post = get_args()
     # solve(pre, c, post)

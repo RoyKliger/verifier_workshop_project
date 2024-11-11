@@ -1,7 +1,7 @@
 #import the parser
 from parser import Statement, int_expr, bool_expr, program
 from parser.models import Assignment, If, While, For
-from commands.wlp import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
+from commands.hybrid import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
 from global_variables import program_variables
 
@@ -81,9 +81,10 @@ class OurParser():
                     it returns that command. Otherwise, it returns a SeqCommand
                     containing the sequence of commands.
         """
-        
+        print("********************************code_str: ", code_str)
         lst = program.parse_or_raise(code_str) # or program.parse(code_str)?
 
+        print("********************************lst: ", lst)
         # code_str does not contain any commands i.e. it is empty
         if len(lst) == 0:
             return SkipCommand()
