@@ -3,7 +3,7 @@ import z3
 
 from commands.commands_wlp_hybrid import Command, HoareTriple
 from parser.our_parser import OurParser
-# from old_parsing import parse_command
+from global_variables import loops
 
 def verify_code(code : str, pre : str, post : str):
   """
@@ -16,16 +16,16 @@ def verify_code(code : str, pre : str, post : str):
     None
   """
 
+  global loops
+  loops = False # Resetting before parsing new code
+
   parser = OurParser()
 
   parsed_pre = parser.parse_single_annotation(pre)
   parsed_code = parser.parse_code(code)
   parsed_post = parser.parse_single_annotation(post)
+
   return solve(parsed_pre, parsed_code, parsed_post)
-
-
-  
-  
 
 def solve(pre : BoolRef, command : Command, post: BoolRef):
 
@@ -38,7 +38,7 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
     formula_set = hoare_triple.verifyTriple()
     formula = z3.And(list(formula_set))
 
-    # check if the negation of the vc is satisfiable
+    # Check if the negation of the vc is satisfiable
     s.add(z3.Not(formula))
     if s.check() == z3.sat:
         print("The verification condition is not valid.")
