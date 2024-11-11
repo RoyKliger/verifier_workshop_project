@@ -1,7 +1,6 @@
 #import the parser
 from parser import Statement, int_expr, bool_expr, program
-# from pyrsercomb import Parser
-from parser.models import Assignment, If, While
+from parser.models import Assignment, If, While, For
 from commands.wlp import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
 from global_variables import program_variables
@@ -38,7 +37,29 @@ class OurParser():
             # Recursively build the sequence of commands
             first_command = WhileCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.body), boolexpr_z3ify(first_statement.invariant))
             return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
-            
+        
+        elif isinstance(first_statement, For):
+            print("Performing For")
+            bodyCommand = self.from_parser_to_commands(first_statement.body)
+            diffCommand = self.from_parser_to_commands([first_statement.diff])
+            print("\n\nDIFFCOMMAND ", diffCommand)
+            print("\n\nDIFFCOMAND type ", type(diffCommand))
+
+            first_command = SeqCommand(
+                self.from_parser_to_commands([first_statement.start]),
+                WhileCommand(
+                    boolexpr_z3ify(first_statement.end),
+                    SeqCommand(
+                        bodyCommand,
+                        diffCommand
+                    ),
+                    # While loop invariant
+                    boolexpr_z3ify(first_statement.invariant)
+                    #diffCommand.substitute(boolexpr_z3ify(first_statement.end)
+                )
+            )
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
+        
         # elif isinstance(parse_result, List["statement"]):
         #     c1 = from_parser_to_commands(parse_result[0])
         #     c2 = from_parser_to_commands(parse_result[1:])
