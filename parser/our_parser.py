@@ -28,11 +28,11 @@ class OurParser():
             return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
         elif isinstance(first_statement, If):
             first_command = IfCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.if_true), self.from_parser_to_commands(first_statement.if_false))
-            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), boolexpr_z3ify(first_statement.mid))
         # FIX THE FOLLOWING CODE. parse_result.invariant does not exist, we need to obtain the invariant from the annotations file
         elif isinstance(first_statement, While):
             first_command = WhileCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.body), boolexpr_z3ify(first_statement.invariant))
-            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), boolexpr_z3ify(first_statement.mid))
         
         elif isinstance(first_statement, For):
             print("Performing For")
@@ -54,7 +54,7 @@ class OurParser():
                     #diffCommand.substitute(boolexpr_z3ify(first_statement.end)
                 )
             )
-            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), boolexpr_z3ify(first_statement.mid))
         
         # elif isinstance(parse_result, List["statement"]):
         #     c1 = from_parser_to_commands(parse_result[0])

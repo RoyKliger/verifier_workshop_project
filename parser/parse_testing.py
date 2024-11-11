@@ -6,13 +6,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from verifier import verify_code
 
 test_code = """
-for x := 0; x < 10; x := x + 1; do [x >= 0 && x <= 10] {
-    y := y + 1;
-}
+x := 0; [x = 0]
+y := 0; [y = 0 && x = 0]
 """
 
 parsed_result = program.parse_or_raise(test_code)
 print(parsed_result)
 
 
-print(verify_code(test_code, "true", "y > 0"))
+print(verify_code(test_code, "true", "x >= 0"))
