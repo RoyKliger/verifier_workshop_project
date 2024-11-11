@@ -1,10 +1,16 @@
-from z3 import BoolRef, ExprRef
+from z3 import BoolRef
 import z3
 
+
+# Set of all program variables
 program_variables = set()
+
 
 # Define the abstract syntax for the language
 class Command:
+
+    variables = set()
+
     def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
         return z3.Implies(pre, self.calculate_wlp(post))
 

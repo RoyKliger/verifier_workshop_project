@@ -1,8 +1,6 @@
 from pyrsercomb import token, regex, fix, Parser, string, lift3, const, lift2, lift5
 
-from models import (
-    Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, For,
-    Statement)
+from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, For, Statement
 
 lpar, rpar = token(string("(")), token(string(")"))
 lbracket, rbracket = token(string("[")), token(string("]"))

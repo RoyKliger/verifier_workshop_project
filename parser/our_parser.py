@@ -1,18 +1,14 @@
 #import the parser
-from ast import parse
-from re import L, S
-from parser import Statement, int_expr, bool_expr
+from parser import Statement, int_expr, bool_expr, program
 # from pyrsercomb import Parser
 from parser.models import Assignment, If, While
-from commands.commands_wlp_hybrid import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
-from pyrsercomb import token, regex, fix, Parser, string, lift3, const, lift2
-from models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
-from __init__ import program, bool_expr, int_expr, statement
+from commands.commands_wlp_hybrid import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand, program_variables
+from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
 
-from z3 import BoolRef, ExprRef, Implies, And, Not, Int, Bool, substitute
+from z3 import BoolRef, ExprRef, Int, Bool
 import z3
 
-from typing import List, Dict, Literal, Tuple
+from typing import List
 
 
 
@@ -29,7 +25,6 @@ class OurParser():
         elif isinstance(first_statement, If):
             first_command = IfCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.if_true), self.from_parser_to_commands(first_statement.if_false))
             return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
-        # FIX THE FOLLOWING CODE. parse_result.invariant does not exist, we need to obtain the invariant from the annotations file
         elif isinstance(first_statement, While):
             first_command = WhileCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.body), boolexpr_z3ify(first_statement.invariant))
             return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
@@ -74,7 +69,32 @@ class OurParser():
 
     def parse_single_annotation(self, annotation : str) -> BoolRef:
 
-        return boolexpr_z3ify(bool_expr.parse_or_raise(annotation))
+        annotation_expr = boolexpr_z3ify(bool_expr.parse_or_raise(annotation))
+        program_variables = program_variables.union(get_variables_from_boolexpr(annotation_expr))
+        return annotation_expr
+
+    
+
+def get_variables_from_boolexpr(expr: BoolExpr) -> set:
+    variables = set()
+    if isinstance(expr, Identifier):
+        variables.add(expr.name)
+    elif isinstance(expr, Comparison):
+        variables.update(get_variables_from_intexpr(expr.left))
+        variables.update(get_variables_from_intexpr(expr.right))
+    elif isinstance(expr, BinaryBoolExpr):
+        variables.update(get_variables_from_boolexpr(expr.left))
+        variables.update(get_variables_from_boolexpr(expr.right))
+    return variables
+
+def get_variables_from_intexpr(expr: IntExpr) -> set:
+    variables = set()
+    if isinstance(expr, Identifier):
+        variables.add(expr.name)
+    elif isinstance(expr, BinaryIntExpr):
+        variables.update(get_variables_from_intexpr(expr.left))
+        variables.update(get_variables_from_intexpr(expr.right))
+    return variables
 
 
 def intexpr_z3ify(expr : IntExpr) -> ExprRef | None:

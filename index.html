@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifier Project</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Verifier Project</h1>
+    <form id="verifier-form">
+      <label for="code">Code:</label>
+      <textarea id="code" name="code" rows="10" placeholder="Enter your code here..."></textarea>
+      
+      <label for="pre-condition">Precondition:</label>
+      <textarea id="pre-condition" name="pre-condition" rows="1" placeholder="Enter precondition..."></textarea>
+      
+      <label for="post-condition">Postcondition:</label>
+      <textarea id="post-condition" name="post-condition" rows="1" placeholder="Enter postcondition..."></textarea>
+      
+      <button type="submit">Verify</button>
+    </form>
+  </div>
+</body>
+</html>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #333;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  label {
+    margin-top: 10px;
+    font-weight: bold;
+  }
+
+  textarea, input[type="text"] {
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  #code {
+    resize: vertical;
+  }
+
+  #pre-condition, #post-condition {
+    resize: none;
+  }
+
+  button {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+</style>
+<script>
+
+  // Script for "tab to indent" in codeareas
+  const textarea = document.querySelector("textarea");
+
+  textarea.addEventListener("keydown", (e) => {
+    if (e.keyCode === 9) {
+      e.preventDefault();
+
+      textarea.setRangeText(
+        "    ",
+        textarea.selectionStart,
+        textarea.selectionStart,
+        "end"
+      );
+    }
+  });
+
+  // Script for form submission
+  async function verifyCode(code, preCondition, postCondition) {
+    const response = await fetch('/verify', {  // Change to /verifier
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code, preCondition, postCondition }),
+    });
+    const result = await response.json();
+    return result;
+  }
+
+  i = 0;
+
+  document.getElementById('verifier-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const code = document.getElementById('code').value;
+    const preCondition = document.getElementById('pre-condition').value;
+    const postCondition = document.getElementById('post-condition').value;
+
+    const result = await verifyCode(code, preCondition, postCondition);
+
+    const message = document.createElement('p');
+    message.id = 'message' + i;
+    if (i > 0) {
+        document.getElementById('message' + (i - 1)).remove();
+    }
+    message.textContent = result.success ? "Verification successful!" : "Verification failed.";
+    message.style.color = result.success ? 'green' : 'red';
+    this.appendChild(message);
+
+    i++;
+  });
+</script>
