@@ -1,8 +1,6 @@
 from pyrsercomb import token, regex, fix, Parser, string, lift3, const, lift2, lift5
 
-from models import (
-    Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, For,
-    Statement)
+from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, For, Statement
 
 lpar, rpar = token(string("(")), token(string(")"))
 lbracket, rbracket = token(string("[")), token(string("]"))
@@ -92,23 +90,3 @@ program = ~statement
 
 # # Update statement parser to include array and method call
 # list = fix(lambda parser: def_statement(parser) ^ array)
-
-
-if __name__ == "__main__":
-#     print(bool_expr.parse_or_raise("true;"))
-#     print(program.parse_or_raise("skip;"))
-#     print(program.parse_or_raise("x := (50 * y) + 7;"))
-    print(program.parse_or_raise("""
-    if x > y then { 
-        x := (50 * y) + 7; 
-        y := x;
-    } else 
-        skip; 
-    """))
-#     print(program.parse_or_raise("""
-#     x := 0;
-#     while x < 10 do {
-#         x := x + 1;
-#         y := y + 1;
-#     } end
-#     """))

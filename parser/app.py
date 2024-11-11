@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 import sys
 import os
-from typing import List, Dict
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from verifier import verify_code
@@ -38,7 +37,7 @@ class VerifierApp:
     self.code_frame = ttk.Frame(container)
 
     ttk.Label(self.code_frame, text='Code:').grid(column=0, row=0, sticky=tk.W)
-    self.code_file = tk.Text(self.code_frame, width=30, height=30)
+    self.code_file = tk.Text(self.code_frame, width=100, height=30)
     self.code_file.grid(column=0, row=1, sticky=tk.W)
 
     # annotations frame
