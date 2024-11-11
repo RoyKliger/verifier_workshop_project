@@ -1,7 +1,8 @@
+import re
 from z3 import BoolRef
 import z3
 
-from commands.commands_wlp_hybrid import Command, AssignCommand, IfCommand, WhileCommand, SeqCommand, SkipCommand, get_logics_formula
+from commands.commands_wlp_hybrid import Command, HoareTriple
 from parser.our_parser import OurParser
 # from old_parsing import parse_command
 
@@ -34,15 +35,25 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
 
     print(command)
     # obtain the proper verification condition
-    formula = command.verify(pre, post)
-    print("Verification condition: ", formula)
+    hoare_triple = HoareTriple(pre, command, post)
+    formula_set = hoare_triple.verifyTriple()
+    formula = z3.And(list(formula_set))
 
     # check if the negation of the vc is satisfiable
     s.add(z3.Not(formula))
     if s.check() == z3.sat:
         print("The verification condition is not valid.")
-        print(s.model())
-        return False, formula, s.model()
+        model = s.model()
+        print(model)
+        # check which formulas in the set are not satisfied
+        unvalid_formulas = []
+        for f in formula_set:
+            s.add(z3.Not(f))
+            if s.check() == z3.sat:
+                unvalid_formulas.append(f)
+                print(f"Unsatisfied formula: {f}")
+                print(s.model())
+        return False, formula, model
     else:
         print("The verification condition is valid.")
         return True, formula, None
@@ -134,7 +145,7 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
 
 
 if __name__ == "__main__":
-    solve(z3.Int('x') != z3.Int('y'), IfCommand(z3.Int('x') == z3.Int('y'), AssignCommand(z3.Int('x'), z3.Int('y') + 1), AssignCommand(z3.Int('x'), z3.Int('y'))), z3.Int('x') == z3.Int('y'))
+    # solve(z3.Int('x') != z3.Int('y'), IfCommand(z3.Int('x') == z3.Int('y'), AssignCommand(z3.Int('x'), z3.Int('y') + 1), AssignCommand(z3.Int('x'), z3.Int('y'))), z3.Int('x') == z3.Int('y'))
     # pre, c, post = get_args()
     # solve(pre, c, post)
 
