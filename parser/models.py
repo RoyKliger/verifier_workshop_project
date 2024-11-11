@@ -34,6 +34,7 @@ BoolExpr: TypeAlias = Identifier | bool | Comparison | BinaryBoolExpr
 class Assignment:
     variable: Identifier
     value: IntExpr
+    mid: BoolExpr = None
 
 
 @dataclass
@@ -41,6 +42,7 @@ class If:
     condition: BoolExpr
     if_true: "Statement"
     if_false: "Statement"
+    mid: BoolExpr = None
 
 
 @dataclass
@@ -48,6 +50,7 @@ class While:
     condition: BoolExpr
     invariant: BoolExpr
     body: "Statement"
+    mid: BoolExpr = None
 
 
 @dataclass
@@ -57,6 +60,7 @@ class For:
     diff: "Statement"
     invariant: BoolExpr
     body: "Statement"
+    mid: BoolExpr = None
 
 
 Statement: TypeAlias = None | Assignment | If | While | For | list["Statement"]
