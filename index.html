@@ -107,7 +107,7 @@
 
   // Script for form submission
   async function verifyCode(code, preCondition, postCondition) {
-    const response = await fetch('/verify', {  // Change to /verifier
+    const response = await fetch('/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

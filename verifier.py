@@ -1,7 +1,7 @@
 from z3 import BoolRef
 import z3
 
-from commands.commands_wlp_hybrid import Command
+from commands.wlp import Command
 from parser.our_parser import OurParser
 from global_variables import loops
 
@@ -32,12 +32,11 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
     # create solver
     s = z3.Solver()
 
-    print(command)
-    # obtain the proper verification condition
+    # Obtain the proper verification condition
     formula = z3.Implies(pre, command.calculate_wlp(post))
     print("Verification condition: ", formula)
 
-    # check if the negation of the vc is satisfiable
+    # Check if the negation of the vc is satisfiable
     s.add(z3.Not(formula))
     if s.check() == z3.sat:
         print("The verification condition is not valid.")

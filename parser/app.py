@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 import sys
 import os
-from typing import List, Dict
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from verifier import verify_code

@@ -2,7 +2,7 @@
 from parser import Statement, int_expr, bool_expr, program
 # from pyrsercomb import Parser
 from parser.models import Assignment, If, While
-from commands.commands_wlp_hybrid import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
+from commands.wlp import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
 from global_variables import program_variables
 
