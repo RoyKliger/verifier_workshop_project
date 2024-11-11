@@ -3,11 +3,11 @@ import z3
 
 from commands.commands_wlp_hybrid import Command
 from parser.our_parser import OurParser
+from global_variables import loops
 
 from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)
-
 
 def verify_code(code : str, pre : str, post : str):
   """
@@ -20,19 +20,22 @@ def verify_code(code : str, pre : str, post : str):
     None
   """
 
+  global loops
+  loops = False # Resetting before parsing new code
+
   parser = OurParser()
 
-  
-  parsed_code = parser.parse_code(code)
   parsed_pre = parser.parse_single_annotation(pre)
+  parsed_code = parser.parse_code(code)
   parsed_post = parser.parse_single_annotation(post)
 
   ret_value = solve(parsed_pre, parsed_code, parsed_post)
 
   return {
-      'success': ret_value[0],
-      'formula': str(ret_value[1]),
-      'model': None if ret_value[2] is None else str(ret_value[2])
+    'success': ret_value[0],
+    'formula': str(ret_value[1]),
+    'model': None if ret_value[2] is None else str(ret_value[2]),
+    'loop_free': not loops
   }
 
 def solve(pre : BoolRef, command : Command, post: BoolRef):

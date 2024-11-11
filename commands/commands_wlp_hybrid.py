@@ -1,15 +1,12 @@
-from z3 import BoolRef
+from z3 import BoolRef, ExprRef
 import z3
 
+from global_variables import program_variables, loops
 
-# Set of all program variables
-program_variables = set()
 
 
 # Define the abstract syntax for the language
 class Command:
-
-    variables = set()
 
     def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
         return z3.Implies(pre, self.calculate_wlp(post))
@@ -18,6 +15,7 @@ class Command:
         pass
 
 class SkipCommand(Command):
+    
     def __str__(self):
         return "skip"
     
@@ -25,7 +23,7 @@ class SkipCommand(Command):
         return post
 
 class AssignCommand(Command):
-    def __init__(self, var, expr):
+    def __init__(self, var : ExprRef, expr : ExprRef):
         self.var = var
         self.expr = expr
 
@@ -74,6 +72,8 @@ class IfCommand(Command):
     
 class WhileCommand(Command):
     def __init__(self, cond: BoolRef, body: Command, inv: BoolRef):
+        global loops
+        loops = True
         self.cond = cond
         self.body = body
         self.inv = inv
@@ -91,6 +91,7 @@ class WhileCommand(Command):
         )
     
     def calculate_wlp(self, post : BoolRef) -> BoolRef:
+        global program_variables
         return z3.And(self.inv, z3.ForAll(list(program_variables), z3.And(z3.Implies(z3.And(self.inv, self.cond), self.body.calculate_wlp(self.inv)), z3.Implies(z3.And(z3.Not(self.cond), self.inv), post))))
 
 class SeqCommand(Command):

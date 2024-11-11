@@ -108,11 +108,11 @@
   // Script for form submission
   async function verifyCode(code, preCondition, postCondition) {
     const response = await fetch('/verify', {  // Change to /verifier
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code, preCondition, postCondition }),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ code, preCondition, postCondition }),
     });
     const result = await response.json();
     return result;
@@ -131,9 +131,20 @@
     const message = document.createElement('p');
     message.id = 'message' + i;
     if (i > 0) {
-        document.getElementById('message' + (i - 1)).remove();
+      document.getElementById('message' + (i - 1)).remove();
     }
     message.textContent = result.success ? "Verification successful!" : "Verification failed.";
+    if (!result.loop_free) {
+      message.textContent += "Maybe try stronger loop invariants. ";
+    }
+    if (!result.success) {
+      message.textContent += "\n" + "The unsatisfied condition is: " + result.formula + ".\n";
+      if (result.model) {
+        message.textContent += "A counterexample model is: " + result.model
+      } else {
+        message.textContent += "Every model is a counterexample."
+      }
+    }
     message.style.color = result.success ? 'green' : 'red';
     this.appendChild(message);
 
