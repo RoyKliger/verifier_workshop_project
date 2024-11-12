@@ -136,9 +136,6 @@
       document.getElementById('message' + (i - 1)).remove();
     }
     message.textContent = result.success ? "Verification successful!" : "Verification failed.";
-    if (!result.loop_free) {
-      message.textContent += "Maybe try stronger loop invariants. ";
-    }
     if (!result.success) {
       message.textContent += "\nIt would have been successful if the following condition was satisfied: " + result.formula;
       if (result.model) {
