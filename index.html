@@ -210,6 +210,12 @@
     if (i > 0) {
       document.getElementById('message' + (i - 1)).remove();
     }
+    if (result.message.substring(0, 5) === "ERROR") {
+      message.textContent = result.message;
+      message.style.color = 'red';
+      document.getElementById('verifier-form').appendChild(message);
+      return;
+    }
     message.textContent = result.success ? "Verification successful!" : "Verification failed.";
     if (!result.success) {
       message.textContent += "\nIt would have been successful if the following condition was satisfied: " + result.formula;
