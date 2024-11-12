@@ -2,6 +2,9 @@ from z3 import BoolRef
 import z3
 from typing import List, Set
 
+import sys
+import os
+
 
 # Define the abstract syntax for the language
 class Command:  
@@ -90,7 +93,7 @@ class SeqCommand(Command):
         self.mid = mid
 
     def __str__(self):
-        return f"{self.c1}; {self.c2}"
+        return f"{self.c1}; {self.c2} [{self.mid}]"
     
     def verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
         if self.mid is None:
@@ -110,7 +113,7 @@ class SeqCommand(Command):
 # Helper functions for Hoare logic
 def substitute(formula: BoolRef, var, val):  
     """returns new formula with all occurences of var replaced by val"""
-    print(f"Performing commands_wlp_hybrid.substitute with inputs:\nformula: {formula} of type {type(formula)}\nvar: {var} of type {type(var)}\nval: {val} of type {type(val)}")
+    # print(f"Performing commands_wlp_hybrid.substitute with inputs:\nformula: {formula} of type {type(formula)}\nvar: {var} of type {type(var)}\nval: {val} of type {type(val)}")
     return z3.substitute(formula, (var, val))
 
 
@@ -122,13 +125,17 @@ class HoareTriple:
         self.is_loop_free = is_loop_free
 
     def __str__(self):
-        return f"{{ {self.pre} }} {self.command} {{ {self.post} }}"
+        return f"{{ pre: {self.pre} }} command: {self.command} {{ post: {self.post} }}"
     
+    def __repr__(self):
+        return self.__str__()
     
     def verifyTriple(self) -> Set[BoolRef]:
         formulas : Set[BoolRef] = set()
         chunks : List[HoareTriple] = split_to_chunks(self.pre, self.command, self.post) 
+        print("\nChunks:")
         for chunk in chunks:
+            print(f"Chunk is {chunk} and is loop free is {chunk.is_loop_free}")
             if chunk.is_loop_free:
                 formulas.add(verify_with_wlp(chunk.pre, chunk.command, chunk.post))
             else:
@@ -210,7 +217,7 @@ def verify_with_wlp(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef
     return z3.Implies(pre, command.calculate_wlp(post))
     
 def alert_no_mid_value():
-    print("No mid value was provided for the SeqCommand. The verification may not be correct.")
+    print("No mid value was provided for the SeqCommand. The verification may not be correct!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     
 def check_and_assign_mid(mid : BoolRef | None) -> BoolRef:
     if mid is None:
@@ -218,4 +225,87 @@ def check_and_assign_mid(mid : BoolRef | None) -> BoolRef:
         alert_no_mid_value()
     return mid
 
+def solve(pre : BoolRef, command : Command, post: BoolRef):
+
+    # create solver
+    s = z3.Solver()
+
+    # print(command)
+    # obtain the proper verification condition
+    hoare_triple = HoareTriple(pre, command, post)
+    formula_set = hoare_triple.verifyTriple()
+    formula = z3.And(list(formula_set))
+
+    # Check if the negation of the vc is satisfiable
+    s.add(z3.Not(formula))
+    if s.check() == z3.sat:
+        print("The verification condition is not valid.")
+        model = s.model()
+        print(model)
+        # check which formulas in the set are not satisfied
+        unvalid_formulas = []
+        for f in formula_set:
+            s.add(z3.Not(f))
+            if s.check() == z3.sat:
+                unvalid_formulas.append(f)
+                print(f"Unsatisfied formula: {f}")
+                print(s.model())
+        return False, formula, model
+    else:
+        print("The verification condition is valid.")
+        return True, formula, None
+
+
+if __name__ == "__main__":
+    # Example 1: Skip Command
+    print("Example 1: Skip Command")
+    pre = z3.Bool(True)
+    post = z3.Bool(True)
+    skip_command = SkipCommand()
+    print(f"Hoare Triple: {{ pre: {pre} }} \ncommand: {skip_command} \n{{ post: {post} }}")
+    print(f"Verification Conditions: {solve(pre, skip_command, post)}")
+
+    # Example 2: Assign Command
+    print("\nExample 2: Assign Command")
+    x = z3.Int('x')
+    expr = z3.IntVal(5)
+    assign_command = AssignCommand(x, expr)
+    pre_assign = x == 0
+    post_assign = x == 5
+    print(f"Hoare Triple: {{ pre: {pre_assign} }} \ncommand: {assign_command} \n{{ post: {post_assign} }}")
+    print(f"Verification Conditions: {solve(pre_assign, assign_command, post_assign)}")
+
+    # Example 3: If Command
+    print("\nExample 3: If Command")
+    cond = x > 0
+    assign_command1 = AssignCommand(x, z3.IntVal(10))
+    assign_command2 = AssignCommand(x, z3.IntVal(20))
+    if_command = IfCommand(cond, assign_command1, assign_command2)
+    pre_if = z3.And(x >= 0, x <= 100)  # Example precondition
+    post_if = z3.Or(x == 10, x == 20)  # Example postcondition
+    print(f"Hoare Triple: {{ pre: {pre_if} }} \ncommand: {if_command} \n{{ post: {post_if} }}")
+    print(f"Verification Conditions: {solve(pre_if, if_command, post_if)}")
+
+    # Example 4: While Command with mid values
+    print("\nExample 4: While Command with mid values")
+    y = z3.Int('y')
+    inv = z3.And(y >= 0, y <= 10)  # Example invariant
+    cond = y > 0  # Example condition
+    body_command = AssignCommand(y, y - 1)
+    while_command = WhileCommand(cond, body_command, inv)
+    pre_while = y == 10  # Example precondition
+    mid_pre_while = y == 10  # Example mid value
+    mid_post_while = y == 0  # Example mid value
+    post_while = y == 0  # Example postcondition
+    seq_command = SeqCommand(AssignCommand(x, z3.IntVal(0)), SeqCommand(while_command, AssignCommand(x, y), mid_post_while), mid_pre_while)
+    print(f"Hoare Triple: {{ pre: {pre_while} }} \ncommand: {seq_command} \n{{ post: {post_while} }}")
+    print(f"Verification Conditions: {solve(pre_while, seq_command, post_while)}")
+
+    # Example 5: Sequence Command
+    print("\nExample 5: Sequence Command")
+    seq_command = SeqCommand(AssignCommand(x, z3.IntVal(1)), SeqCommand(AssignCommand(y, z3.IntVal(2)), AssignCommand(x, x + y)))
+    pre_seq = z3.And(x == 0, y == 0)  # Example precondition
+    post_seq = x == 3  # Example postcondition
+    print(f"Hoare Triple: {{ pre: {pre_seq} }} \ncommand: {seq_command} \n{{ post: {post_seq} }}")
+    print(f"Verification Conditions: {solve(pre_seq, seq_command, post_seq)}")
 
