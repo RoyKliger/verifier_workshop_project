@@ -1,0 +1,14 @@
+Verification condition:  Implies(And(0 <= a, 0 < b),
+        And(And(a == 0*b + a, And(0 <= a, a <= a)),
+            ForAll([r, q],
+                   And(Implies(And(And(a == q*b + r,
+                                       And(0 <= r, r <= a)),
+                                   r >= b),
+                               And(a == (q + 1)*b + r - b,
+                                   And(0 <= r - b,
+                                       r - b <= a))),
+                       Implies(And(Not(r >= b),
+                                   And(a == q*b + r,
+                                       And(0 <= r, r <= a))),
+                               And(r < b, a == q*b + r))))))
+The verification condition is valid.

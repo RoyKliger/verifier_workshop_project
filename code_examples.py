@@ -8,7 +8,7 @@ r := a;
 while r >= b do [a = (q*b) + r && (0 <= r && r <= a)] {
     r := r - b;
     q := q + 1;
-}
+} end
 '''
 
 pre1 = '''
