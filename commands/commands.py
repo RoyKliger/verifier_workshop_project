@@ -1,6 +1,6 @@
 from z3 import BoolRef, ExprRef
 import z3
-
+from logger import log
 
 # Define the abstract syntax for the language
 class Command:
@@ -23,7 +23,7 @@ class AssignCommand(Command):
         return f"{self.var} := {self.expr}"
     
     def verify(self, pre, post) -> BoolRef:
-        # print("\nASSIGN: ", z3.Implies(pre, substitute(post, self.var, self.expr)))
+        # log("\nASSIGN: ", z3.Implies(pre, substitute(post, self.var, self.expr)))
         # if z3.z3util.get_vars(self.expr) == []:
             # return z3.Implies(substitute(post, self.var, self.expr), post)
             # return z3.Implies(pre, z3.And(pre, self.var == self.expr))
@@ -41,7 +41,7 @@ class IfCommand(Command):
     def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
         then_pre = z3.And(pre, self.cond)
         else_pre = z3.And(pre, z3.Not(self.cond))
-        # print("\nIF: ", z3.And(self.c1.verify(then_pre, post), self.c2.verify(else_pre, post)))
+        # log("\nIF: ", z3.And(self.c1.verify(then_pre, post), self.c2.verify(else_pre, post)))
         return z3.And(self.c1.verify(then_pre, post), self.c2.verify(else_pre, post))
     
 class WhileCommand(Command):
@@ -55,7 +55,7 @@ class WhileCommand(Command):
     
     def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
         body_pre = z3.And(self.inv, self.cond)
-        # print("\nWHILE: ", z3.And(z3.Implies(pre, self.inv), z3.Implies(z3.And(self.inv, z3.Not(self.cond)), post), self.body.verify(body_pre, self.inv)))
+        # log("\nWHILE: ", z3.And(z3.Implies(pre, self.inv), z3.Implies(z3.And(self.inv, z3.Not(self.cond)), post), self.body.verify(body_pre, self.inv)))
         return z3.And(
             z3.Implies(pre, self.inv),
             z3.Implies(z3.And(self.inv, z3.Not(self.cond)), post),
@@ -71,7 +71,7 @@ class SeqCommand(Command):
         return f"{self.c1}; {self.c2}"
     
     def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
-        # print("\nSEQ: ", z3.And(self.c1.verify(pre, self.mid), self.c2.verify(self.mid, post)))
+        # log("\nSEQ: ", z3.And(self.c1.verify(pre, self.mid), self.c2.verify(self.mid, post)))
         return z3.And(self.c1.verify(pre, self.mid), self.c2.verify(self.mid, post))
 
 # Helper functions for Hoare logic
