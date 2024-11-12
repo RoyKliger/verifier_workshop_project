@@ -17,7 +17,7 @@ def verify_code(code : str, pre : str, post : str, verification_type: str = "wlp
         None
     """
 
-    global program_variables
+    # global program_variables
     program_variables = set()
 
     clear_logs()
@@ -58,7 +58,7 @@ def solve(pre : BoolRef, command : Command, post: BoolRef, verification_type: st
 
 def get_verification_conditions(pre : BoolRef, command : Command, post : BoolRef, verification_type: str) -> set[BoolRef]:
     if verification_type == "wlp":
-        return {command.calculate_wlp(post)}
+        return {z3.Implies(pre, command.calculate_wlp(post))}
     elif verification_type == "hybrid":
         hoare_triple = HoareTriple(pre, command, post)
         return hoare_triple.verifyTriple()
