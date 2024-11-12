@@ -27,19 +27,28 @@ def verify_code(code : str, pre : str, post : str, verification_type: str = "wlp
     clear_logs()
 
     parser = OurParser()
+    
+    bad_invariants = False
 
-    try:
+    try:   
         parsed_pre = parser.parse_single_annotation(pre)
-        parsed_code = parser.parse_code(code)
         parsed_post = parser.parse_single_annotation(post)
+    except Exception as e:
+        log(f"An error occurred: {e}")
+        return False, None, None, f"ERROR: pre-condition or post-condition is invalid: {e}"
+    try:
+        parsed_code = parser.parse_code(code)
+        log(f"Parsed command: {parsed_code}")
         is_valid, formula, model, bad_invariants = solve(parsed_pre, parsed_code, parsed_post, verification_type)
     except Exception as e:
         log(f"An error occurred: {e}")
         return False, None, None, f"ERROR: {e}"
     
     if bad_invariants:
-        return is_valid, formula, model, "The annotations you added might not be strong enough to prove the post-condition. Please try to improve the annotations or choose another method."
+        return is_valid, formula, model, "The annotations you added might not be strong enough. Please try to improve the annotations or choose a different method."
 
+    if not is_valid:
+        return is_valid, formula, model, "The verification condition is not valid lol."
     return is_valid, formula, model, ""
     
 def solve(pre : BoolRef, command : Command, post: BoolRef, verification_type: str = "wlp"):

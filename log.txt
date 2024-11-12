@@ -1,1 +1,7 @@
-The verification condition is valid.
+Parsed command: x := 0; [And(0 == x, 0 == y)] while (10 > x) do { x := x + 1; [None] y := y + 1 }
+check_and_assign_mid is called with mid value:  And(0 == x, 0 == y)
+Chunks are [{ pre: 0 == y } command: x := 0 { post: And(0 == x, 0 == y) }, { pre: And(0 == x, 0 == y) } command: while (10 > x) do { x := x + 1; [None] y := y + 1 } { post: 9 == y }]
+Chunks are []
+The verification condition is not valid.
+[y = 10, x = 10]
+Unsatisfied formula: Implies(And(And(10 >= x, x == y), Not(10 > x)), 9 == y) with model [x = 10, y = 10]

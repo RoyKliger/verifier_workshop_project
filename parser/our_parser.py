@@ -19,7 +19,7 @@ class OurParser():
             return SkipCommand()
         first_statement = parse_result[0]
         mid = boolexpr_z3ify(first_statement.mid)
-        mid = None if mid is False else mid
+        mid = None if z3.is_false(mid) else mid
         if isinstance(first_statement, Assignment):
             # Add variable to set of program variables
             #program_variables = program_variables.add(first_statement.variable.name)
@@ -76,15 +76,15 @@ class OurParser():
                 while i < len(str) and str[i] == " ":
                     i += 1
                 if i >= len(str) or str[i] != "[":
-                    str = str[:i] + "[false] " + str[i:]
-                    i += len("[false] ")
+                    str = str[:i] + " [false] " + str[i:]
+                    i += len(" [false] ")
             elif str[i:i+2] == "do":
                 j = i + 2
                 while j < len(str) and (str[j] == " " or str[j] == "\n"):
                     j += 1
                 if j < len(str) and str[j] == "{" and (j == i + 2 or str[i+2:j].strip() != "["):
-                    str = str[:j] + "[false] " + str[j:]
-                    i = j + len("[false] ")
+                    str = str[:j] + " [false] " + str[j:]
+                    i = j + len(" [false] ")
                 else:
                     i = j
             elif str[i:i+3] == "end":
@@ -92,8 +92,8 @@ class OurParser():
                 while j < len(str) and str[j] == " ":
                     j += 1
                 if j >= len(str) or str[j] != "[":
-                    str = str[:j] + "[false] " + str[j:]
-                    i = j + len("[false] ")
+                    str = str[:j] + " [false] " + str[j:]
+                    i = j + len(" [false] ")
                 else:
                     i = j
             else:

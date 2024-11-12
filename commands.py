@@ -1,8 +1,9 @@
+from click import clear
 from z3 import BoolRef, ExprRef
 import z3
 from typing import List, Set
 
-from logger import log
+from logger import log, clear_logs
 from global_variables import program_variables
 
 
@@ -119,7 +120,7 @@ class SeqCommand(Command):
         self.mid = mid
 
     def __str__(self):
-        return f"{self.c1}; {self.c2} [{self.mid}]"
+        return f"{self.c1}; [{self.mid}] {self.c2}"
     
     def verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
         mid = check_and_assign_mid(self.mid)
@@ -162,9 +163,8 @@ class HoareTriple:
     def verifyTriple(self) -> Set[BoolRef]:
         formulas : Set[BoolRef] = set()
         chunks : List[HoareTriple] = split_to_chunks(self.pre, self.command, self.post) 
-        log("Chunks:")
         for chunk in chunks:
-            log(f"Chunk is {chunk} and is loop free is {chunk.is_loop_free}")
+            # log(f"Chunk is {chunk} and is loop free is {chunk.is_loop_free}")
             if chunk.is_loop_free:
                 formulas.add(verify_with_wlp(chunk.pre, chunk.command, chunk.post))
             else:
@@ -221,6 +221,7 @@ def split_to_chunks(pre : BoolRef, command : Command, post : BoolRef) -> List[Ho
             return
                 
         helper(pre, command, post)
+        log(f"Chunks are {chunks}")
         return chunks    
 
 def pack_command(commands : List[Command]) -> Command:
@@ -251,6 +252,7 @@ def alert_no_mid_value():
     raise Exception("A mid value was not provided")
     
 def check_and_assign_mid(mid : BoolRef | None) -> BoolRef:
+    log("check_and_assign_mid is called with mid value: ", mid)
     if mid is None:
         mid = z3.BoolVal(True)
         alert_no_mid_value()
@@ -288,6 +290,7 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
 
 
 if __name__ == "__main__":
+    clear_logs()
     # Example 1: Skip Command
     log("Example 1: Skip Command")
     pre = z3.Bool(True)
