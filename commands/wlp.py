@@ -2,7 +2,7 @@ from z3 import BoolRef, ExprRef
 import z3
 
 from global_variables import program_variables, loops
-
+from logger import log
 
 
 # Define the abstract syntax for the language
@@ -34,7 +34,7 @@ class AssignCommand(Command):
         return f"{self.var} := {self.expr}"
     
     # def verify(self, pre, post) -> BoolRef:
-    #     # print("\nASSIGN: ", z3.Implies(pre, substitute(post, self.var, self.expr)))
+    #     # log("\nASSIGN: ", z3.Implies(pre, substitute(post, self.var, self.expr)))
     #     # if z3.z3util.get_vars(self.expr) == []:
     #         # return z3.Implies(substitute(post, self.var, self.expr), post)
     #         # return z3.Implies(pre, z3.And(pre, self.var == self.expr))
@@ -55,7 +55,7 @@ class IfCommand(Command):
     # def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
     #     then_pre = z3.And(pre, self.cond)
     #     else_pre = z3.And(pre, z3.Not(self.cond))
-    #     # print("\nIF: ", z3.And(self.c1.verify(then_pre, post), self.c2.verify(else_pre, post)))
+    #     # log("\nIF: ", z3.And(self.c1.verify(then_pre, post), self.c2.verify(else_pre, post)))
     #     return z3.And(self.c1.verify(then_pre, post), self.c2.verify(else_pre, post))
     
     def calculate_wlp(self, post : BoolRef) -> BoolRef:
@@ -83,7 +83,7 @@ class WhileCommand(Command):
     
     def verify(self, pre: BoolRef, post: BoolRef) -> BoolRef:
         body_pre = z3.And(self.inv, self.cond)
-        # print("\nWHILE: ", z3.And(z3.Implies(pre, self.inv), z3.Implies(z3.And(self.inv, z3.Not(self.cond)), post), self.body.verify(body_pre, self.inv)))
+        # log("\nWHILE: ", z3.And(z3.Implies(pre, self.inv), z3.Implies(z3.And(self.inv, z3.Not(self.cond)), post), self.body.verify(body_pre, self.inv)))
         return z3.And(
             z3.Implies(pre, self.inv),
             z3.Implies(z3.And(self.inv, z3.Not(self.cond)), post),
@@ -126,7 +126,7 @@ class SeqCommand(Command):
 # Helper functions for Hoare logic
 def substitute(formula: BoolRef, var, val) -> BoolRef:  
     """returns new formula with all occurences of var replaced by val"""
-    print(f"Performing commands_wlp_hybrid.substitute with inputs:\nformula: {formula} of type {type(formula)}\nvar: {var} of type {type(var)}\nval: {val} of type {type(val)}")
+    # log(f"Performing commands_wlp_hybrid.substitute with inputs:\nformula: {formula} of type {type(formula)}\nvar: {var} of type {type(var)}\nval: {val} of type {type(val)}")
     return z3.substitute(formula, (var, val))
 
 def get_logics_formula(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef:

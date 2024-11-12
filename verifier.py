@@ -4,35 +4,42 @@ import z3
 from commands.hybrid import Command, HoareTriple
 # from commands.wlp import Command
 from parser.our_parser import OurParser
-from global_variables import loops
+from global_variables import loops, program_variables
+from logger import log, clear_logs
 
 def verify_code(code : str, pre : str, post : str):
-  """
-  Solves the verification problem for the given code and annotations.
-  Args:
-    code (str): The string representation of the code.
-    pre (str): The string representation of the pre-condition.
-    post (str): The string representation of the post-condition.
-  Returns:
-    None
-  """
+    """
+    Solves the verification problem for the given code and annotations.
+    Args:
+        code (str): The string representation of the code.
+        pre (str): The string representation of the pre-condition.
+        post (str): The string representation of the post-condition.
+    Returns:
+        None
+    """
 
-  global loops
-  loops = False # Resetting before parsing new code
+    global loops, program_variables
+    loops = False # Resetting before parsing new code
+    program_variables = set()
 
-  parser = OurParser()
+    clear_logs()
 
-  parsed_pre = parser.parse_single_annotation(pre)
-  parsed_code = parser.parse_code(code)
-  parsed_post = parser.parse_single_annotation(post)
+    parser = OurParser()
 
-  return solve(parsed_pre, parsed_code, parsed_post)
+    parsed_pre = parser.parse_single_annotation(pre)
+    parsed_code = parser.parse_code(code)
+    parsed_post = parser.parse_single_annotation(post)
+
+    return solve(parsed_pre, parsed_code, parsed_post)
 
 def solve(pre : BoolRef, command : Command, post: BoolRef):
 
     # create solver
     s = z3.Solver()
 
+    # Obtain the proper verification condition
+    formula = z3.Implies(pre, command.calculate_wlp(post))
+    log("Verification condition: ", formula)
     print(command)
     # obtain the proper verification condition
     hoare_triple = HoareTriple(pre, command, post)
@@ -42,6 +49,9 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
     # Check if the negation of the vc is satisfiable
     s.add(z3.Not(formula))
     if s.check() == z3.sat:
+        log("The verification condition is not valid.")
+        log(s.model())
+        return False, formula, s.model() # passed, formula, model
         print("The verification condition is not valid.")
         model = s.model()
         print(model)
@@ -55,6 +65,8 @@ def solve(pre : BoolRef, command : Command, post: BoolRef):
                 print(s.model())
         return False, formula, model
     else:
+        log("The verification condition is valid.")
+        return True, formula, None # passed, formula, model (None if no model)
         print("The verification condition is valid.")
         return True, formula, None
 

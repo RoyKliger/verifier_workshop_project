@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verifier Project</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
   <div class="container">
@@ -138,7 +140,7 @@
       message.textContent += "Maybe try stronger loop invariants. ";
     }
     if (!result.success) {
-      message.textContent += "\n" + "The unsatisfied condition is: " + result.formula + ".\n";
+      message.textContent += "\nIt would have been successful if the following condition was satisfied: " + result.formula;
       if (result.model) {
         message.textContent += "A counterexample model is: " + result.model
       } else {
@@ -147,6 +149,8 @@
     }
     message.style.color = result.success ? 'green' : 'red';
     this.appendChild(message);
+
+    MathJax.typeset();
 
     i++;
   });

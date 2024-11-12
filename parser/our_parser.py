@@ -42,11 +42,8 @@ class OurParser():
             return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), mid)
         
         elif isinstance(first_statement, For):
-            print("Performing For")
             bodyCommand = self.from_parser_to_commands(first_statement.body)
             diffCommand = self.from_parser_to_commands([first_statement.diff])
-            print("\n\nDIFFCOMMAND ", diffCommand)
-            print("\n\nDIFFCOMAND type ", type(diffCommand))
 
             first_command = SeqCommand(
                 self.from_parser_to_commands([first_statement.start]),
