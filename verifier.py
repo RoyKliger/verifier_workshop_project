@@ -7,7 +7,7 @@ from parser.our_parser import OurParser
 from global_variables import loops, program_variables
 from logger import log, clear_logs
 
-def verify_code(code : str, pre : str, post : str):
+def verify_code(code : str, pre : str, post : str, verification_type: str):
     """
     Solves the verification problem for the given code and annotations.
     Args:
@@ -17,6 +17,8 @@ def verify_code(code : str, pre : str, post : str):
     Returns:
         None
     """
+
+    print(" HAIEDWAIJDA " , verification_type)
 
     global loops, program_variables
     loops = False # Resetting before parsing new code
