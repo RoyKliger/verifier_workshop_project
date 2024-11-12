@@ -128,12 +128,9 @@ class SeqCommand(Command):
         return c1_verifications.union(c2_verifications)
     
     def hybrid_verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
-        if self.mid is None:
-            self.mid = z3.BoolVal(True)
-            alert_no_mid_value()
-            
-        first_hoare_triple = HoareTriple(pre, self.c1, self.mid)
-        second_hoare_triple = HoareTriple(self.mid, self.c2, post)
+        mid = check_and_assign_mid(self.mid)      
+        first_hoare_triple = HoareTriple(pre, self.c1, mid)
+        second_hoare_triple = HoareTriple(mid, self.c2, post)
         first_vc = first_hoare_triple.verifyTriple()
         second_vc = second_hoare_triple.verifyTriple()
         return first_vc.union(second_vc)
@@ -249,7 +246,9 @@ def verify_with_wlp(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef
     return z3.Implies(pre, command.calculate_wlp(post))
     
 def alert_no_mid_value():
+    print("No mid value was provided for the SeqCommand. The verification may not be correct!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     log("No mid value was provided for the SeqCommand. The verification may not be correct!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    raise Exception("A mid value was not provided")
     
 def check_and_assign_mid(mid : BoolRef | None) -> BoolRef:
     if mid is None:

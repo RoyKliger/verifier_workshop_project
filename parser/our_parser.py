@@ -1,7 +1,7 @@
 #import the parser
 from parser import Statement, int_expr, bool_expr, program
 from parser.models import Assignment, If, While, For
-from commands.commands import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
+from commands import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
 from global_variables import program_variables
 
@@ -100,6 +100,7 @@ class OurParser():
                 i += 1
 
         print("MID STRING:", str)
+        
         return str
 
     
@@ -125,7 +126,7 @@ class OurParser():
 
         # code_str does not contain any commands i.e. it is empty
         if len(lst) == 0:
-            return SkipCommand()
+            raise Exception("Code is empty or invalid")
         
         # this is a separate case to avoid index out of range exception in c2
         if len(lst) == 1:

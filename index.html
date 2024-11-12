@@ -214,6 +214,7 @@
       message.textContent = result.message;
       message.style.color = 'red';
       document.getElementById('verifier-form').appendChild(message);
+      i++;
       return;
     }
     message.textContent = result.success ? "Verification successful!" : "Verification failed.";
