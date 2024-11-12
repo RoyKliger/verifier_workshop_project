@@ -1,4 +1,3 @@
-from click import clear
 from z3 import BoolRef, ExprRef
 import z3
 from typing import List, Set
@@ -252,7 +251,7 @@ def alert_no_mid_value():
     raise Exception("A mid value was not provided")
     
 def check_and_assign_mid(mid : BoolRef | None) -> BoolRef:
-    log("check_and_assign_mid is called with mid value: ", mid)
+    # log("check_and_assign_mid is called with mid value: ", mid)
     if mid is None:
         mid = z3.BoolVal(True)
         alert_no_mid_value()
