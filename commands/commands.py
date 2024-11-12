@@ -122,8 +122,9 @@ class SeqCommand(Command):
         return f"{self.c1}; {self.c2} [{self.mid}]"
     
     def verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
-        c1_verifications = self.c1.verify(pre, self.mid)
-        c2_verifications = self.c2.verify(self.mid, post)
+        mid = check_and_assign_mid(self.mid)
+        c1_verifications = self.c1.verify(pre, mid)
+        c2_verifications = self.c2.verify(mid, post)
         return c1_verifications.union(c2_verifications)
     
     def hybrid_verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
