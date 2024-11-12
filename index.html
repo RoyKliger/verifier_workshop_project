@@ -204,9 +204,7 @@
     const preCondition = document.getElementById('pre-condition').value;
     const postCondition = document.getElementById('post-condition').value;
     const type = buttonId === 'verify-wlp' ? 'wlp' : buttonId === 'verify-hybrid' ? 'hybrid' : 'hoare_logic';
-
     const result = await verifyCode(code, preCondition, postCondition, type);
-
     const message = document.createElement('p');
     message.id = 'message' + i;
     if (i > 0) {
@@ -222,7 +220,7 @@
       }
     }
     message.style.color = result.success ? 'green' : 'red';
-    this.appendChild(message);
+    document.getElementById('verifier-form').appendChild(message);
 
     MathJax.typeset();
 
