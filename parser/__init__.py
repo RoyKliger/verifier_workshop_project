@@ -62,14 +62,14 @@ def def_statement(parser: Parser[str, Statement]) -> Parser[str, Statement]:
     if_statement = (
             token(string("if")) >> bool_expr << token(string("then"))
             & parser << token(string("else"))
-            & parser
+            & parser << token(string("end"))
             & token(lbracket >> bool_expr << rbracket)
     )[lift4(If)]
 
     while_statement = (
             token(string("while")) >> bool_expr << token(string("do"))
             & token(lbracket >> bool_expr << rbracket)
-            & parser
+            & parser << token(string("end"))
             & token(lbracket >> bool_expr << rbracket) 
     )[lift4(While)]
 
@@ -78,7 +78,7 @@ def def_statement(parser: Parser[str, Statement]) -> Parser[str, Statement]:
             & bool_expr << semicolon
             & assignment << token(string("do"))
             & token(lbracket >> bool_expr << rbracket)
-            & parser
+            & parser << token(string("end"))
             & token(lbracket >> bool_expr << rbracket)
     )[lift6(For)]
 

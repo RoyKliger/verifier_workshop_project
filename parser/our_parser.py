@@ -18,18 +18,20 @@ class OurParser():
             # Parse_result is None in the case of a skip command.
             return SkipCommand()
         first_statement = parse_result[0]
+        mid = boolexpr_z3ify(first_statement.mid)
+        mid = None if mid is False else mid
         if isinstance(first_statement, Assignment):
             # Add variable to set of program variables
             #program_variables = program_variables.add(first_statement.variable.name)
             # Recursively build the sequence of commands
             first_command = AssignCommand(intexpr_z3ify(first_statement.variable), intexpr_z3ify(first_statement.value))
-            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])))
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), mid)
         elif isinstance(first_statement, If):
             # Add variables to set of program variables
             #program_variables = program_variables.union(get_variables_from_boolexpr(first_statement.condition))
             # Recursively build the sequence of commands
             first_command = IfCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.if_true), self.from_parser_to_commands(first_statement.if_false))
-            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), boolexpr_z3ify(first_statement.mid))
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), mid)
         # FIX THE FOLLOWING CODE. parse_result.invariant does not exist, we need to obtain the invariant from the annotations file
         elif isinstance(first_statement, While):
             # Add variables to set of program variables
@@ -37,7 +39,7 @@ class OurParser():
 
             # Recursively build the sequence of commands
             first_command = WhileCommand(boolexpr_z3ify(first_statement.condition), self.from_parser_to_commands(first_statement.body), boolexpr_z3ify(first_statement.invariant))
-            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), boolexpr_z3ify(first_statement.mid))
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), mid)
         
         elif isinstance(first_statement, For):
             print("Performing For")
@@ -59,7 +61,7 @@ class OurParser():
                     #diffCommand.substitute(boolexpr_z3ify(first_statement.end)
                 )
             )
-            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), boolexpr_z3ify(first_statement.mid))
+            return first_command if len(parse_result) == 1 else SeqCommand(first_command, self.from_parser_to_commands(list(parse_result[1:])), mid)
         
         # elif isinstance(parse_result, List["statement"]):
         #     c1 = from_parser_to_commands(parse_result[0])
@@ -68,6 +70,41 @@ class OurParser():
         #     return SeqCommand(c1, c2, mid)
         else:
             raise Exception("Invalid command, here is the command: ", parse_result)
+        
+    def add_default_mids(self, str: str) -> str:
+        i = 0
+        while i < len(str):
+            if str[i] == ";":
+                i += 1
+                while i < len(str) and str[i] == " ":
+                    i += 1
+                if i >= len(str) or str[i] != "[":
+                    str = str[:i] + "[false] " + str[i:]
+                    i += len("[false] ")
+            elif str[i:i+2] == "do":
+                j = i + 2
+                while j < len(str) and (str[j] == " " or str[j] == "\n"):
+                    j += 1
+                if j < len(str) and str[j] == "{" and (j == i + 2 or str[i+2:j].strip() != "["):
+                    str = str[:j] + "[false] " + str[j:]
+                    i = j + len("[false] ")
+                else:
+                    i = j
+            elif str[i:i+3] == "end":
+                j = i + 3
+                while j < len(str) and str[j] == " ":
+                    j += 1
+                if j >= len(str) or str[j] != "[":
+                    str = str[:j] + "[false] " + str[j:]
+                    i = j + len("[false] ")
+                else:
+                    i = j
+            else:
+                i += 1
+
+        print("MID STRING:", str)
+        return str
+
     
     # str -> Command
     def parse_code(self, code_str : str) -> Command:
@@ -81,10 +118,14 @@ class OurParser():
                     it returns that command. Otherwise, it returns a SeqCommand
                     containing the sequence of commands.
         """
-        print("********************************code_str: ", code_str)
+
+        code_str = self.add_default_mids(code_str)
+
+
         lst = program.parse_or_raise(code_str) # or program.parse(code_str)?
 
-        print("********************************lst: ", lst)
+        print("Parsed code: ", lst)
+
         # code_str does not contain any commands i.e. it is empty
         if len(lst) == 0:
             return SkipCommand()
@@ -95,9 +136,9 @@ class OurParser():
         
         c1 = self.from_parser_to_commands([lst[0]])
         c2 = self.from_parser_to_commands(lst[1:])
-        
+
         # recursively build the sequence of commands
-        return SeqCommand(c1, c2)
+        return SeqCommand(c1, c2, boolexpr_z3ify(lst[0].mid))
 
 
     def parse_single_annotation(self, annotation : str) -> BoolRef:
