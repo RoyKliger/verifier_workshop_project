@@ -217,15 +217,16 @@
       i++;
       return;
     }
-    message.textContent = result.success ? "Verification successful!" : "Verification failed.";
+    message.textContent = result.success ? "Verification successful!" : "Verification failed. ";
     if (!result.success) {
-      message.textContent += "\nIt would have been successful if the following condition was satisfied: " + result.formula;
+      message.textContent += "It would have been successful if the following condition was satisfied: " + result.formula + " ";
       if (result.model) {
-        message.textContent += "A counterexample model is: " + result.model
+        message.textContent += "A counterexample model is: " + result.model + " ";
       } else {
-        message.textContent += "Every model is a counterexample."
+        message.textContent += "Every model is a counterexample. "
       }
     }
+    message.textContent += result.message;
     message.style.color = result.success ? 'green' : 'red';
     document.getElementById('verifier-form').appendChild(message);
 
