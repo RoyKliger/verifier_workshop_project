@@ -2,7 +2,7 @@ from parser import Statement, bool_expr, program
 from parser.models import Assignment, If, While, For
 from commands import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement
-from global_variables import program_variables
+from resources.global_variables import program_variables
 
 from z3 import BoolRef, ExprRef, Int, Bool
 import z3
@@ -71,12 +71,18 @@ class OurParser():
         i = 0
         while i < len(str):
             if str[i] == ";":
+                # Check if semicolon follows 'skip'
+                if i >= 4 and str[i-4:i] == "skip":
+                    i += 1
+                    continue
+                
                 i += 1
                 while i < len(str) and str[i] == " ":
                     i += 1
                 if i >= len(str) or str[i] != "[":
                     str = str[:i] + " [false] " + str[i:]
                     i += len(" [false] ")
+
             elif str[i:i+2] == "do":
                 j = i + 2
                 while j < len(str) and (str[j] == " " or str[j] == "\n"):
@@ -86,6 +92,7 @@ class OurParser():
                     i = j + len(" [false] ")
                 else:
                     i = j
+
             elif str[i:i+3] == "end":
                 j = i + 3
                 while j < len(str) and str[j] == " ":
@@ -95,11 +102,11 @@ class OurParser():
                     i = j + len(" [false] ")
                 else:
                     i = j
+
             else:
                 i += 1
 
         print("MID STRING:", str)
-        
         return str
 
     

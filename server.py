@@ -1,5 +1,5 @@
 from verifier import verify_code
-from print_z3 import z3_to_latex
+from resources.print_z3 import z3_to_latex
 from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)

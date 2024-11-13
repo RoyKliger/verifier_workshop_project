@@ -2,8 +2,8 @@ from z3 import BoolRef, ExprRef
 import z3
 from typing import List, Set
 
-from logger import log
-from global_variables import program_variables
+from resources.logger import log
+from resources.global_variables import program_variables
 
 
 class Command:  

@@ -3,8 +3,8 @@ import z3
 
 from commands import Command, HoareTriple
 from parser.parsing import OurParser
-from global_variables import program_variables
-from logger import log, clear_logs
+from resources.global_variables import program_variables
+from resources.logger import log, clear_logs
 
 def verify_code(code : str, pre : str, post : str, verification_type: str = "wlp"):
     """

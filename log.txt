@@ -1,3 +1,0 @@
-Parsed command: if (a < b) then { max := b; [None] a := a } else { max := a }
-No mid value was provided for the SeqCommand. The verification may not be correct!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-An error occurred: A mid value was not provided
