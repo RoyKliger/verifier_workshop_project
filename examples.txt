@@ -1,0 +1,75 @@
+
+
+# Example 1 - simple increment using 2 variables
+
+
+x := 0; [x = 0 && y = 0]
+while x < 10 do [x <= 10 && x = y] {
+    x := x + 1; [x = y+1]
+    y := y + 1;
+} end
+
+y = 0
+
+y = 10
+
+
+# Example 2 - Maximum of two numbers
+
+
+max := a; [a<b && max = a]
+if max < b then {
+    max := b;
+} else {
+    max := a;
+} end
+
+a < b
+
+max = b
+
+
+# Example 3 - Summation of first n numbers
+
+sum := 0;
+x := 1; [(sum = 0 && x = 1) && n>0]
+while x <= n do [x <= n+1 && 2*sum=((x-1)*x)] {
+    sum := sum + x;
+    x := x + 1;
+} end
+
+n>0
+
+2*sum = (n*(n+1))
+
+
+# Example 4 - compare and equalize a and b
+
+if a < b then {
+    while a < b do [a <= b && a >= 0] {
+        a := a + 1;
+    } end
+} else {
+    while b < a do [b <= a && b >= 0] {
+        b := b + 1;
+    } end
+} end
+
+a >= 0 && b >= 0
+
+a=b
+
+
+# Example 5 - Division with remainder
+
+q := 0;
+r := a;
+while r >= b do [a = (q*b) + r && (0 <= r && r <= a)] {
+    r := r - b;
+    q := q + 1;
+} end
+
+a >= 0 && b > 0
+
+r < b && a = (q*b) + r
+
