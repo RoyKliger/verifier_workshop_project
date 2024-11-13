@@ -37,3 +37,22 @@ y = 0
 post2 = '''
 y = 10
 '''
+
+# Example 3 - Maximum of two numbers
+
+code3 = '''
+max := a;
+if max < b then {
+    max := b;
+} else {
+    max := a;
+} end
+'''
+
+pre3 = '''
+a < b
+'''
+
+post3 = '''
+max = b
+'''
