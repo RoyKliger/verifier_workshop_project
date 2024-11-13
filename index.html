@@ -221,7 +221,7 @@
     if (!result.success) {
       message.textContent += "It would have been successful if the following condition was satisfied: " + result.formula + " ";
       if (result.model) {
-        message.textContent += "A counterexample model is: " + result.model + " ";
+        message.textContent += "A counterexample model is: " + result.model + "\\[ \\]";
       } else {
         message.textContent += "Every model is a counterexample. "
       }

@@ -23,12 +23,15 @@ def verify_code(code : str, pre : str, post : str, verification_type: str = "wlp
 
     global program_variables
     program_variables = set()
-
     clear_logs()
 
-    parser = OurParser()
+    if verification_type not in ["wlp", "hybrid", "hoare_logic"]:
+        log("Invalid verification type")
+        return False, None, None, "ERROR: Invalid verification type. Please choose one of the following: 'wlp', 'hybrid', or 'hoare_logic'."
     
+    parser = OurParser()
     bad_invariants = False
+    message = ""
 
     try:   
         parsed_pre = parser.parse_single_annotation(pre)
@@ -45,11 +48,18 @@ def verify_code(code : str, pre : str, post : str, verification_type: str = "wlp
         return False, None, None, f"ERROR: {e}"
     
     if bad_invariants:
-        return is_valid, formula, model, "The annotations you added might not be strong enough. Please try to improve the annotations or choose a different method."
+        message = "The system has recognized that the invariants are not strong enough. Please check the invariants."
 
-    if not is_valid:
-        return is_valid, formula, model, "The verification condition is not valid lol."
-    return is_valid, formula, model, ""
+    elif not is_valid:
+        if verification_type == "wlp":
+            message = "Consider strengthening the invariants. You may also try using the hybrid or hoare_logic verification methods by adding more annotations if required."
+        elif verification_type == "hybrid":
+            message = "Consider strengthening the invariants and annotations. You may also try using the hoare_logic verification method by adding annotations."
+        else:
+            message = "Consider strengthening the invariants and annotations."
+    log("message: " + message)
+    
+    return is_valid, formula, model, message
     
 def solve(pre : BoolRef, command : Command, post: BoolRef, verification_type: str = "wlp"):
     """

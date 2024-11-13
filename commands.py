@@ -246,14 +246,12 @@ def verify_with_wlp(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef
     return z3.Implies(pre, command.calculate_wlp(post))
     
 def alert_no_mid_value():
-    print("No mid value was provided for the SeqCommand. The verification may not be correct!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    log("No mid value was provided for the SeqCommand. The verification may not be correct!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    raise Exception("A mid value was not provided")
+    log("No mid value was provided for the SeqCommand. The verification may not be correct")
+    raise Exception("A reuired middle annotation was not provided")
     
 def check_and_assign_mid(mid : BoolRef | None) -> BoolRef:
     # log("check_and_assign_mid is called with mid value: ", mid)
     if mid is None:
-        mid = z3.BoolVal(True)
         alert_no_mid_value()
     return mid
 
