@@ -1,3 +1,4 @@
+from unittest import skip
 from z3 import BoolRef, ExprRef
 import z3
 from typing import List, Set
@@ -122,12 +123,20 @@ class SeqCommand(Command):
         return f"{self.c1}; [{self.mid}] {self.c2}"
     
     def verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
+        if isinstance(self.c1, SkipCommand):
+            return self.c2.verify(pre, post)
+        if isinstance(self.c2, SkipCommand):
+            return self.c1.verify(pre, post)
         mid = check_and_assign_mid(self.mid)
         c1_verifications = self.c1.verify(pre, mid)
         c2_verifications = self.c2.verify(mid, post)
         return c1_verifications.union(c2_verifications)
     
     def hybrid_verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
+        if isinstance(self.c1, SkipCommand):
+            return self.c2.verify(pre, post)
+        if isinstance(self.c2, SkipCommand):
+            return self.c1.verify(pre, post)
         mid = check_and_assign_mid(self.mid)      
         first_hoare_triple = HoareTriple(pre, self.c1, mid)
         second_hoare_triple = HoareTriple(mid, self.c2, post)
