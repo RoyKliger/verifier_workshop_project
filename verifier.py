@@ -91,24 +91,21 @@ def solve(pre : BoolRef, command : Command, post: BoolRef, verification_type: st
     if s.check() == z3.sat:
         log("The verification condition is not valid.")
         model = s.model()
-        log(model)
-        
+        log("model recieved:", model)
+
         check_model = model.eval(pre, model_completion=True)
         if  z3.is_false(check_model):
             bad_invariants = True
         # check which formulas in the set are not satisfied
-        unvalid_formulas = []
-        for f in verification_set:
-            s.add(z3.Not(f))
-            if s.check() == z3.sat:
-                unvalid_formulas.append(f)
-                log(f"Unsatisfied formula: {f} with model {s.model()}")
+        for vc in verification_set:
+            if s.check(vc) == z3.sat:
+                log(f"Counterexample for {vc}: {s.model()}")
         
     else:
         log("The verification condition is valid.")
         is_valid = True
         
-    return is_valid, formula, model, bad_invariants  # passed, formula, model (None if no model)
+    return is_valid, formula, model, bad_invariants  
 
 
 def get_verification_conditions(pre : BoolRef, command : Command, post : BoolRef, verification_type: str) -> set[BoolRef]:

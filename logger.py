@@ -1,5 +1,4 @@
 
-
 log_file = "log.txt"
 
 def log(*messages):

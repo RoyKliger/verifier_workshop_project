@@ -1,5 +1,4 @@
-#import the parser
-from parser import Statement, int_expr, bool_expr, program
+from parser import Statement, bool_expr, program
 from parser.models import Assignment, If, While, For
 from commands import Command, SkipCommand, AssignCommand, IfCommand, WhileCommand, SeqCommand
 from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, Statement

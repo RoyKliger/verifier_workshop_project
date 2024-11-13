@@ -1,21 +1,22 @@
-from unittest import skip
 from z3 import BoolRef, ExprRef
 import z3
 from typing import List, Set
 
-from logger import log, clear_logs
+from logger import log
 from global_variables import program_variables
 
 
-# Define the abstract syntax for the language
 class Command:  
     def verify(self, pre, post) -> Set[BoolRef]:
+        """Returns a set of formulas that are the verification conditions for this command using hoare logic"""
         pass
     
     def hybrid_verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
+        """Returns a set of formulas that are the verification conditions for this command using hybrid verification"""
         pass
 
     def calculate_wlp(self, post) -> BoolRef:
+        """Returns the wlp of this command according to the given post condition"""
         pass
     
     
@@ -134,9 +135,9 @@ class SeqCommand(Command):
     
     def hybrid_verify(self, pre: BoolRef, post: BoolRef) -> Set[BoolRef]:
         if isinstance(self.c1, SkipCommand):
-            return self.c2.verify(pre, post)
+            return self.c2.hybrid_verify(pre, post)
         if isinstance(self.c2, SkipCommand):
-            return self.c1.verify(pre, post)
+            return self.c1.hybrid_verify(pre, post)
         mid = check_and_assign_mid(self.mid)      
         first_hoare_triple = HoareTriple(pre, self.c1, mid)
         second_hoare_triple = HoareTriple(mid, self.c2, post)
@@ -147,13 +148,6 @@ class SeqCommand(Command):
     def calculate_wlp(self, post : BoolRef) -> BoolRef:
         return self.c1.calculate_wlp(self.c2.calculate_wlp(post))
     
-            
-# Helper functions for Hoare logic
-def substitute(formula: BoolRef, var, val) -> BoolRef:  
-    """returns new formula with all occurences of var replaced by val"""
-    # log(f"Performing commands_wlp_hybrid.substitute with inputs:\nformula: {formula} of type {type(formula)}\nvar: {var} of type {type(var)}\nval: {val} of type {type(val)}")
-    return z3.substitute(formula, (var, val))
-
 
 class HoareTriple:
     def __init__(self, pre: BoolRef, command : Command, post: BoolRef, is_loop_free: bool = False):
@@ -169,10 +163,10 @@ class HoareTriple:
         return self.__str__()
     
     def verifyTriple(self) -> Set[BoolRef]:
+        """Returns a set of formulas that are the verification conditions for this HoareTriple"""
         formulas : Set[BoolRef] = set()
         chunks : List[HoareTriple] = split_to_chunks(self.pre, self.command, self.post) 
         for chunk in chunks:
-            # log(f"Chunk is {chunk} and is loop free is {chunk.is_loop_free}")
             if chunk.is_loop_free:
                 formulas.add(verify_with_wlp(chunk.pre, chunk.command, chunk.post))
             else:
@@ -229,7 +223,6 @@ def split_to_chunks(pre : BoolRef, command : Command, post : BoolRef) -> List[Ho
             return
                 
         helper(pre, command, post)
-        log(f"Chunks are {chunks}")
         return chunks    
 
 def pack_command(commands : List[Command]) -> Command:
@@ -240,6 +233,7 @@ def pack_command(commands : List[Command]) -> Command:
     return SeqCommand(commands[0], pack_command(commands[1:]))
 
 def is_containing_loop(command : Command) -> bool:
+    """Returns True if the command contains a loop"""
     if isinstance(command, WhileCommand):
         return True
     if isinstance(command, SeqCommand):
@@ -259,93 +253,14 @@ def alert_no_mid_value():
     raise Exception("A reuired middle annotation was not provided")
     
 def check_and_assign_mid(mid : BoolRef | None) -> BoolRef:
-    # log("check_and_assign_mid is called with mid value: ", mid)
+    """Checks if the mid value is None and raises an exception if it is"""
     if mid is None:
         alert_no_mid_value()
     return mid
 
-def solve(pre : BoolRef, command : Command, post: BoolRef):
-
-    # create solver
-    s = z3.Solver()
-
-    # log(command)
-    # obtain the proper verification condition
-    hoare_triple = HoareTriple(pre, command, post)
-    formula_set = hoare_triple.verifyTriple()
-    formula = z3.And(list(formula_set))
-
-    # Check if the negation of the vc is satisfiable
-    s.add(z3.Not(formula))
-    if s.check() == z3.sat:
-        log("The verification condition is not valid.")
-        model = s.model()
-        log(model)
-        # check which formulas in the set are not satisfied
-        unvalid_formulas = []
-        for f in formula_set:
-            s.add(z3.Not(f))
-            if s.check() == z3.sat:
-                unvalid_formulas.append(f)
-                log(f"Unsatisfied formula: {f}")
-                log(s.model())
-        return False, formula, model
-    else:
-        log("The verification condition is valid.")
-        return True, formula, None
+def substitute(formula: BoolRef, var, val) -> BoolRef:  
+    """returns new formula with all occurences of var replaced by val"""
+    return z3.substitute(formula, (var, val))
 
 
-if __name__ == "__main__":
-    clear_logs()
-    # Example 1: Skip Command
-    log("Example 1: Skip Command")
-    pre = z3.Bool(True)
-    post = z3.Bool(True)
-    skip_command = SkipCommand()
-    log(f"Hoare Triple: {{ pre: {pre} }} \ncommand: {skip_command} \n{{ post: {post} }}")
-    log(f"Verification Conditions: {solve(pre, skip_command, post)}")
-
-    # Example 2: Assign Command
-    log("\nExample 2: Assign Command")
-    x = z3.Int('x')
-    expr = z3.IntVal(5)
-    assign_command = AssignCommand(x, expr)
-    pre_assign = x == 0
-    post_assign = x == 5
-    log(f"Hoare Triple: {{ pre: {pre_assign} }} \ncommand: {assign_command} \n{{ post: {post_assign} }}")
-    log(f"Verification Conditions: {solve(pre_assign, assign_command, post_assign)}")
-
-    # Example 3: If Command
-    log("\nExample 3: If Command")
-    cond = x > 0
-    assign_command1 = AssignCommand(x, z3.IntVal(10))
-    assign_command2 = AssignCommand(x, z3.IntVal(20))
-    if_command = IfCommand(cond, assign_command1, assign_command2)
-    pre_if = z3.And(x >= 0, x <= 100)  # Example precondition
-    post_if = z3.Or(x == 10, x == 20)  # Example postcondition
-    log(f"Hoare Triple: {{ pre: {pre_if} }} \ncommand: {if_command} \n{{ post: {post_if} }}")
-    log(f"Verification Conditions: {solve(pre_if, if_command, post_if)}")
-
-    # Example 4: While Command with mid values
-    log("\nExample 4: While Command with mid values")
-    y = z3.Int('y')
-    inv = z3.And(y >= 0, y <= 10)  # Example invariant
-    cond = y > 0  # Example condition
-    body_command = AssignCommand(y, y - 1)
-    while_command = WhileCommand(cond, body_command, inv)
-    pre_while = y == 10  # Example precondition
-    mid_pre_while = y == 10  # Example mid value
-    mid_post_while = y == 0  # Example mid value
-    post_while = y == 0  # Example postcondition
-    seq_command = SeqCommand(AssignCommand(x, z3.IntVal(0)), SeqCommand(while_command, AssignCommand(x, y), mid_post_while), mid_pre_while)
-    log(f"Hoare Triple: {{ pre: {pre_while} }} \ncommand: {seq_command} \n{{ post: {post_while} }}")
-    log(f"Verification Conditions: {solve(pre_while, seq_command, post_while)}")
-
-    # Example 5: Sequence Command
-    log("\nExample 5: Sequence Command")
-    seq_command = SeqCommand(AssignCommand(x, z3.IntVal(1)), SeqCommand(AssignCommand(y, z3.IntVal(2)), AssignCommand(x, x + y)))
-    pre_seq = z3.And(x == 0, y == 0)  # Example precondition
-    post_seq = x == 3  # Example postcondition
-    log(f"Hoare Triple: {{ pre: {pre_seq} }} \ncommand: {seq_command} \n{{ post: {post_seq} }}")
-    log(f"Verification Conditions: {solve(pre_seq, seq_command, post_seq)}")
 
