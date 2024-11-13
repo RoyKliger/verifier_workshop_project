@@ -1,6 +1,5 @@
 
-
-log_file = "log.txt"
+log_file = "resources\log.txt"
 
 def log(*messages):
     with open(log_file, "a") as f:

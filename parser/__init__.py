@@ -1,4 +1,4 @@
-from pyrsercomb import token, regex, fix, Parser, string, lift3, const, lift2, lift5
+from pyrsercomb import token, regex, fix, Parser, string, lift3, const, lift2, lift4, lift5, lift6
 
 from parser.models import Identifier, IntExpr, BinaryIntExpr, BinaryBoolExpr, BoolExpr, Comparison, Assignment, If, While, For, Statement
 
@@ -49,29 +49,38 @@ def def_bool_expr(parser: Parser[str, BoolExpr]) -> Parser[str, BoolExpr]:
 bool_expr = fix(def_bool_expr)
 
 skip = token(string("skip"))[const(None)] << semicolon
-assignment = (ident << assign & int_expr)[lift2(Assignment)] << semicolon
-no_semicolon_assignment = (ident << assign & int_expr)[lift2(Assignment)]
+assignment = ((
+    ident << assign
+    & int_expr
+    ) << semicolon
+    & token(lbracket >> bool_expr << rbracket)
+)[lift3(Assignment)]
+
+# & token(lbracket >> bool_expr << rbracket)
 
 def def_statement(parser: Parser[str, Statement]) -> Parser[str, Statement]:
     if_statement = (
             token(string("if")) >> bool_expr << token(string("then"))
             & parser << token(string("else"))
-            & parser 
-    )[lift3(If)]
+            & parser << token(string("end"))
+            & token(lbracket >> bool_expr << rbracket)
+    )[lift4(If)]
 
     while_statement = (
             token(string("while")) >> bool_expr << token(string("do"))
             & token(lbracket >> bool_expr << rbracket)
-            & parser
-    )[lift3(While)]
+            & parser << token(string("end"))
+            & token(lbracket >> bool_expr << rbracket) 
+    )[lift4(While)]
 
     for_statement = (
             token(string("for")) >> assignment
             & bool_expr << semicolon
             & assignment << token(string("do"))
             & token(lbracket >> bool_expr << rbracket)
-            & parser
-    )[lift5(For)]
+            & parser << token(string("end"))
+            & token(lbracket >> bool_expr << rbracket)
+    )[lift6(For)]
 
     block = lbrace >> ~parser << rbrace
 

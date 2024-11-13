@@ -1,1 +1,4 @@
+flask
+sympy
+z3-solver
 pyrsercomb@git+https://github.com/neta-elad/pyrsercomb

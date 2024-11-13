@@ -1,0 +1,4 @@
+Parsed command: max := a; [And(max == a, a < b)] if (max < b) then { max := b } else { skip }
+The verification condition is not valid.
+model recieved: [b = 2, a = 1]
+message: Consider strengthening the invariants. You may also try using the hybrid or hoare_logic verification methods by adding more annotations if required.

@@ -1,6 +1,6 @@
 from z3 import *
 from sympy import symbols, And as SymAnd, Or as SymOr, Not as SymNot, Eq as SymEq
-from sympy import latex, pretty
+from sympy import latex
 
 
 def z3_to_latex(expr):

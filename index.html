@@ -20,8 +20,21 @@
       
       <label for="post-condition">Postcondition:</label>
       <textarea id="post-condition" name="post-condition" rows="1" placeholder="Enter postcondition..."></textarea>
+
+      <div class="button-group">
+        <button type="submit" id="verify-wlp">Verify with WLP
+          <span class="tooltip">Utilize Dijkstra's weakest liberal precondition \(\text{wlp}\) completely i.e. \[\models P \to \text{wlp} [\![ c ]\!] Q \] Only needed annotations are loop invariants.</span>
+        </button>
       
-      <button type="submit">Verify</button>
+        <button type="submit" id="verify-hybrid">Verify with Hybrid method
+          <span class="tooltip">Use \(\text{wlp}\) for loop-free code, and Hoare Logic otherwise<br>Needed annotations are loop invariants and between loop-free code and non-loop-free code.</span>
+        </button>
+      
+        <button type="submit" id="verify-hoare">Verify with Hoare Logic
+          <span class="tooltip">Use basic Hoare Logic rules.<br>Annotations needed after every statement as well as loop invariants.
+          </span>
+        </button>
+      </div>
     </form>
   </div>
 </body>
@@ -41,6 +54,13 @@
     background-color: #fff;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+  }
+
+  .button-group {
+    width: 100%;
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
   }
 
   h1 {
@@ -74,6 +94,17 @@
     resize: none;
   }
 
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  .button-group {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
   button {
     margin-top: 20px;
     padding: 10px;
@@ -83,13 +114,42 @@
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
+    width: 32%;
+    position: relative;
   }
 
-  button:hover {
-    background-color: #0056b3;
+  button:hover .tooltip {
+    display: block;
+  }
+
+  .tooltip {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+    margin-top: 5px;
+    text-align: center;
+    z-index: 1;
   }
 </style>
 <script>
+  
+  // Script for showing and hiding tooltips
+  function showTooltip(id) {
+    document.getElementById(id).style.display = 'block';
+  }
+
+  function hideTooltip(id) {
+    document.getElementById(id).style.display = 'none';
+  }
 
   // Script for "tab to indent" in codeareas
   const textarea = document.querySelector("textarea");
@@ -108,13 +168,13 @@
   });
 
   // Script for form submission
-  async function verifyCode(code, preCondition, postCondition) {
+  async function verifyCode(code, preCondition, postCondition, type) {
     const response = await fetch('/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ code, preCondition, postCondition }),
+      body: JSON.stringify({ code, preCondition, postCondition, type }),
     });
     const result = await response.json();
     return result;
@@ -122,36 +182,91 @@
 
   i = 0;
 
-  document.getElementById('verifier-form').addEventListener('submit', async function(event) {
+  const wlp_button = document.getElementById('verify-wlp');
+  const hybrid_button = document.getElementById('verify-hybrid');
+  const hoare_button = document.getElementById('verify-hoare');
+
+  wlp_button.addEventListener('click', function() {
     event.preventDefault();
+    submitEvent('verifier-form','verify-wlp');
+  });
+  hybrid_button.addEventListener('click', function() {
+    event.preventDefault();
+    submitEvent('verifier-form','verify-hybrid');
+  });
+  hoare_button.addEventListener('click', function() {
+    event.preventDefault();
+    submitEvent('verifier-form','verify-hoare');
+  });
+
+  async function submitEvent(formId, buttonId) {
     const code = document.getElementById('code').value;
     const preCondition = document.getElementById('pre-condition').value;
     const postCondition = document.getElementById('post-condition').value;
-
-    const result = await verifyCode(code, preCondition, postCondition);
-
+    const type = buttonId === 'verify-wlp' ? 'wlp' : buttonId === 'verify-hybrid' ? 'hybrid' : 'hoare_logic';
+    const result = await verifyCode(code, preCondition, postCondition, type);
     const message = document.createElement('p');
     message.id = 'message' + i;
     if (i > 0) {
       document.getElementById('message' + (i - 1)).remove();
     }
-    message.textContent = result.success ? "Verification successful!" : "Verification failed.";
-    if (!result.loop_free) {
-      message.textContent += "Maybe try stronger loop invariants. ";
+    if (result.message.substring(0, 5) === "ERROR") {
+      message.textContent = result.message;
+      message.style.color = 'red';
+      document.getElementById('verifier-form').appendChild(message);
+      i++;
+      return;
     }
+    message.textContent = result.success ? "Verification successful!" : "Verification failed. ";
     if (!result.success) {
-      message.textContent += "\nIt would have been successful if the following condition was satisfied: " + result.formula;
+      message.textContent += "It would have been successful if the following condition was satisfied: " + result.formula + " ";
       if (result.model) {
-        message.textContent += "A counterexample model is: " + result.model
+        message.textContent += "A counterexample model is: " + result.model + "\\[ \\]";
       } else {
-        message.textContent += "Every model is a counterexample."
+        message.textContent += "Every model is a counterexample. "
       }
     }
+    message.textContent += result.message;
     message.style.color = result.success ? 'green' : 'red';
-    this.appendChild(message);
+    document.getElementById('verifier-form').appendChild(message);
 
     MathJax.typeset();
 
     i++;
-  });
+  }
+
+  // document.getElementById('verifier-form').addEventListener('submit', async function(event) {
+  //   event.preventDefault();
+
+  //   const code = document.getElementById('code').value;
+  //   const preCondition = document.getElementById('pre-condition').value;
+  //   const postCondition = document.getElementById('post-condition').value;
+  //   const type = event.target.id === 'verifier-form' ? 'wlp' : event.target.id === 'verify-hybrid' ? 'hybrid' : 'hoare_logic';
+
+  //   const result = await verifyCode(code, preCondition, postCondition, type);
+
+  //   const message = document.createElement('p');
+  //   message.id = 'message' + i;
+  //   if (i > 0) {
+  //     document.getElementById('message' + (i - 1)).remove();
+  //   }
+  //   message.textContent = result.success ? "Verification successful!" : "Verification failed.";
+  //   if (!result.loop_free) {
+  //     message.textContent += "Maybe try stronger loop invariants. ";
+  //   }
+  //   if (!result.success) {
+  //     message.textContent += "\nIt would have been successful if the following condition was satisfied: " + result.formula;
+  //     if (result.model) {
+  //       message.textContent += "A counterexample model is: " + result.model
+  //     } else {
+  //       message.textContent += "Every model is a counterexample."
+  //     }
+  //   }
+  //   message.style.color = result.success ? 'green' : 'red';
+  //   this.appendChild(message);
+
+  //   MathJax.typeset();
+
+  //   i++;
+  // });
 </script>
