@@ -250,7 +250,7 @@ def verify_with_wlp(pre : BoolRef, command : Command, post : BoolRef) -> BoolRef
     
 def alert_no_mid_value():
     log("No mid value was provided for the SeqCommand. The verification may not be correct")
-    raise Exception("A reuired middle annotation was not provided")
+    raise Exception("A required middle annotation was not provided")
     
 def check_and_assign_mid(mid : BoolRef | None) -> BoolRef:
     """Checks if the mid value is None and raises an exception if it is"""
