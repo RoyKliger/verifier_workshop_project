@@ -2,7 +2,7 @@ from z3 import BoolRef
 import z3
 
 from commands import Command, HoareTriple
-from parser.our_parser import OurParser
+from parser.parsing import OurParser
 from global_variables import program_variables
 from logger import log, clear_logs
 
