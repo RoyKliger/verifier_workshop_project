@@ -1,6 +1,8 @@
 # Formal Verification Project for While Language
 
-Project Overview: 
+(Clone this repository and run server.py to launch the server on localhost:5000)
+
+Project Overview:
 
 This project is a formal verification tool designed for a simple programming language that supports basic integer operations and control structures, specifically the while language. The tool verifies program correctness by checking Hoare triples: {P} c {Q}, where P is a precondition, c is a command or series of commands, and Q is a postcondition. Using the first-order logic and SMT solver Z3, this tool systematically verifies that a given program adheres to specified logical constraints.
 
@@ -27,3 +29,5 @@ For the most detailed verification, Hoare Logic is used, generating verification
 Mid Annotations: Necessary between every two lines of code.
 Use Case: Ensures precise verification, especially for complex control flows with nested structures.
 Advantages: Guarantees correctness if all annotations are accurate and strong enough.
+
+Note that the shown verification condition will not be rendered with LaTeX when the code contains a loop due to an issue with a Python package.
